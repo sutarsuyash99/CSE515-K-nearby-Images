@@ -8,4 +8,4 @@
 1. `main.py` will be our entry point
 2. `util.py` and `common.py` will be shared codebase for utility function
 3. `data` folder will contain the database
-4. Create your own test files to work out some functionality (you can choose to not push it; eg: `testp.py`) 
+4. You can use `test.py` (It is not updated or versioned on git)
