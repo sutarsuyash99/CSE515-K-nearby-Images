@@ -1,3 +1,12 @@
 data/
 **.pkl
 test.py
+**/bin
+**/lib
+**/include
+**/.vscode
+**/etc
+**/share
+**/__pycache__
+**/.DS_Store
+**/Scripts
