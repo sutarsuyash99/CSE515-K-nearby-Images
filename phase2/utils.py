@@ -1,4 +1,5 @@
 import torchvision
+import torch
 from typing import Tuple
 from ordered_set import OrderedSet
 
