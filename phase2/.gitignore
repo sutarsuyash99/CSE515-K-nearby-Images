@@ -1,4 +1,6 @@
 data/
+**.pkl
+test.py
 **/bin
 **/lib
 **/include
