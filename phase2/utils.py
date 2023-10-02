@@ -1,7 +1,22 @@
+from typing import Tuple
+import math
+from collections import defaultdict
+
 import torchvision
 import torch
-from typing import Tuple
+from matplotlib import pyplot
+from torchvision import datasets
 from ordered_set import OrderedSet
+from PIL import Image
+
+def int_input(default_value: int = 99) -> int:
+    try:
+        inpu = int(input())
+        return inpu
+    except ValueError:
+        print(f'No proper value was passed, Default value was used')
+        return default_value
+
 
 # for query image id, return label name for it
 def name_for_label_index(dataset: torchvision.datasets.Caltech101, index: int) -> str:
@@ -19,10 +34,66 @@ def img_label_and_named_label_for_query_int(dataset: torchvision.datasets.Caltec
         img, label_id = dataset[index]
         label_name = name_for_label_index(dataset, label_id)
         return (img, label_id, label_name)
-        
-        
 
+def initialise_project():
+    dataset = torchvision.datasets.Caltech101(root='./data', download=True, target_type='category')
 
+    # this is going to be created once and passed throughout in all functions needed
+    # dict: (label: string, list<imageIds: int>)
+    # where key is either label index as int (eg: faces is with index 0) or it is the label name as string
+    # both are added to the map, user can decide which to use
+    # value is the list of ids belonging to that category
+    labelled_images = defaultdict(list)
+    dataset_named_categories = dataset.categories
+    for i in range(len(dataset)):
+        img, label = dataset[i]
+        # label returns the array index for dataset.categories
+        # labelled_images[str(label)].append(i)
+        category_name = dataset_named_categories[label].lower()
+        labelled_images[category_name].append(i)
+    return (dataset, labelled_images)
+
+def display_image_og(pil_img)->Image:
+    pil_img.show()
+    return pil_img
+
+def find_nearest_square(k: int) -> int:
+    return math.ceil(math.sqrt(k))
+
+def gen_unique_number_from_title(string: str) -> int:
+    a = 0
+    for c in string:
+        a+=ord(c)
+    return a
+
+def display_k_images_subplots(dataset: datasets.Caltech101, distances: tuple, title: str):
+    pyplot.close()
+    k = len(distances)
+    # print(len(distances))
+    # distances tuple 0 -> id, 1 -> distance
+    split_x = find_nearest_square(k)
+    split_y = math.ceil(k/split_x)
+    # print(split_x, split_y)
+    # this does not work
+    # pyplot.figure(gen_unique_number_from_title(title))
+    fig, axs = pyplot.subplots(split_x, split_y)
+    fig.suptitle(title)
+    ii = 0
+    for i in range(split_x):
+        for j in range(split_y):
+            if(ii < k):
+                # print(ii)
+                id, distance = distances[ii][0], distances[ii][1]
+                img, _ = dataset[id]
+                if(img.mode == 'L'): axs[i,j].imshow(img, cmap = 'gray')
+                else: axs[i,j].imshow(img)
+                axs[i,j].set_title(f"Image Id: {id} Distance: {distance:.2f}")
+                axs[i,j].axis('off')
+                ii += 1
+            else:
+                fig.delaxes(axs[i,j])
+    # pyplot.title(title)
+    pyplot.show()
 
 
 def label_feature_descriptor_fc(): 
