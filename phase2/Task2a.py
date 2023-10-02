@@ -34,5 +34,6 @@ class Task2a:
             k-=1
         print(top_k)
 
-task2a = Task2a()
-task2a.image_query_top_k()
+if __name__ == '__main__':
+    task2a = Task2a()
+    task2a.image_query_top_k()

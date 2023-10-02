@@ -20,5 +20,6 @@ class Task1:
             print(top_k)
             display_k_images_subplots(self.dataset, top_k, 'Query-Images distances')
 
-task1 = Task1()
-task1.query_image_top_k()
+if __name__ == '__main__':
+    task1 = Task1()
+    task1.query_image_top_k()
