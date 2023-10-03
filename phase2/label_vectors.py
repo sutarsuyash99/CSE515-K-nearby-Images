@@ -25,6 +25,10 @@ def label_fv_init(label: str, labelled_images: TypedDict, feature_space):
     return label_features
 
 def label_fv_kmediods(label: str, labelled_images: TypedDict, feature_shape):
+    '''
+    create label feature vector using the kmediods value of the contained data
+    return that feature vector
+    '''
     try:
         label_features = label_fv_init(label, labelled_images, feature_shape)
         if label_features.ndim > 2:
@@ -47,11 +51,11 @@ def label_image_distance_using_cosine(max_len: int, label_feature_vectors, dict_
     return top_k
 
 # this function is responsible to create feature vector for each label
-'''
-labelled_images from map -> label_id : [images_ids]
-output format: [dict[key: label, value: feature_vector_label], model_space]
-'''    
 def create_labelled_feature_vectors(labelled_images):
+    '''
+    labelled_images from map -> label_id : [images_ids]
+    output format: [dict[key: label, value: feature_vector_label], model_space]
+    '''    
     print('Select your option:\
         \n\n\
         \n1. Color Moments\
