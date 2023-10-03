@@ -46,16 +46,11 @@ def label_image_distance_using_cosine(max_len: int, label_feature_vectors, dict_
     # print(top_k)
     return top_k
 
-def k_image_search_label(label: str, labelled_images: TypedDict, max_len: int, k: int):
-    resnet_fc = torch.load('resnet_fc.pkl')
-    feature_shape_kmedoids = label_fv_kmediods(label, labelled_images, resnet_fc)
-    # feature_shape_kmedoids = label_fv_avg(label, labelled_images, resnet_fc)
-    if feature_shape_kmedoids is not None:
-        return label_image_distance_using_cosine(max_len, feature_shape_kmedoids, resnet_fc, k)
-    else:
-        print("Error condition")
-        return None
-    
+# this function is responsible to create feature vector for each label
+'''
+labelled_images from map -> label_id : [images_ids]
+output format: [dict[key: label, value: feature_vector_label], model_space]
+'''    
 def create_labelled_feature_vectors(labelled_images):
     print('Select your option:\
         \n\n\
@@ -77,6 +72,8 @@ def create_labelled_feature_vectors(labelled_images):
     if model_space is not None:
         labelled_feature_vectors = {}
         for key in labelled_images.keys():
+            # combine all feature vectors into one for label -- labelled embedding
+            # add your min, mean, max code for label here
             labelled_feature_vectors[key] = label_fv_kmediods(key, labelled_images, model_space)
         return (labelled_feature_vectors, model_space)
     else: return None
