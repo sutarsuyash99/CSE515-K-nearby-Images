@@ -7,5 +7,4 @@ def query(collection_name, imageID):
     cursor = collection.find({"imageID": imageID})
     list_cur = list(cursor)
     json_data = dumps(list_cur, indent = 2) 
-    print(json_data)
     return json_data
