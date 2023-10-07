@@ -7,6 +7,7 @@ from Task1 import Task1
 from Task2a import Task2a
 from collections import defaultdict
 
+
 # we can remove this, refactor this further down the line
 dataset, labelled_images = initialise_project()
 # this is going to be created once and passed throughout in all functions needed
