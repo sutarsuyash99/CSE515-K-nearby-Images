@@ -53,6 +53,16 @@ def initialise_project():
         labelled_images[category_name].append(i)
     return (dataset, labelled_images)
 
+def get_image_categories():
+    dataset = torchvision.datasets.Caltech101(root='./data', download=True, target_type='category')
+    labelled_images = defaultdict(list)
+    dataset_named_categories = dataset.categories 
+    for i in range(len(dataset)):
+        _, label = dataset[i]
+        category_name = dataset_named_categories[label]
+        labelled_images[i] = category_name
+    return labelled_images
+
 def display_image_og(pil_img)->Image:
     pil_img.show()
     return pil_img
