@@ -5,9 +5,16 @@ from utils import int_input, initialise_project
 from distances import cosine_similarity
 from Task1 import Task1
 from Task2a import Task2a
+from collections import defaultdict
+
 
 # we can remove this, refactor this further down the line
 dataset, labelled_images = initialise_project()
+# this is going to be created once and passed throughout in all functions needed
+# dict: (label: string, list<imageIds: int>)
+# where key is either label index as int (eg: faces is with index 0) or it is the label name as string
+# both are added to the map, user can decide which to use
+# value is the list of ids belonging to that category
 
 def query_query_top_k():
     # distance formula using cosine formula
@@ -41,6 +48,7 @@ def task1_main():
 def task2_main():
     task2a = Task2a()
     task2a.image_query_top_k()
+
 
 option = -1
 while option != 0:
