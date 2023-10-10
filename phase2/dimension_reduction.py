@@ -5,6 +5,7 @@ from sklearn.decomposition import LatentDirichletAllocation as LDA
 def lda(k: int, data_collection: np.ndarray) -> np.ndarray:
     '''
     returns reduced matrix using sklearn's LDA inbuilt function
+    negative values do not work well with model => handle somehow
     source code reference: https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.LatentDirichletAllocation.html#sklearn.decomposition.LatentDirichletAllocation
     inbuilt-method: https://github.com/scikit-learn/scikit-learn/blob/d99b728b3/sklearn/base.py#L888
     explanation: https://scikit-learn.org/stable/modules/decomposition.html#latentdirichletallocation
