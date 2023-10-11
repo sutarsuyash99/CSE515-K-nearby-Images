@@ -163,7 +163,6 @@ def K_means(k, data_collection):
     # X_r = extractDistanceFeatures(data_collection,C)
     X_r = extractDistanceFeatures(data_collection, Centroids)
     print("Latent Semantics Shape = ", X_r.shape)
-    print(X_r)
     return X_r
     
 
