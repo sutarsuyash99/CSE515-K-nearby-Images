@@ -11,3 +11,4 @@ data/
 **/.DS_Store
 test*
 phase2/
+models/

@@ -3,6 +3,8 @@ import numpy as np
 import torch
 from tqdm import tqdm
 from sklearn.decomposition import LatentDirichletAllocation as LDA
+from normalisation import *
+from utils import convert_higher_dims_to_2d
 
 
 def nmf_als(V, K, iteration=200, tol=1, alpha=0.01):
@@ -10,7 +12,7 @@ def nmf_als(V, K, iteration=200, tol=1, alpha=0.01):
     Non-negative Matrix Factorization (NMF) using Alternating Least Squares (ALS) method.
 
     Parameters:
-        V (numpy.ndarray): The input non-negative data matrix of shape (m, n).
+        V (numpy.ndarray): The input data matrix of shape (m, ...).
         K (int): Desired number of latent semantics
         max_iter (int): Maximum number of iterations.
         tol (float): Tolerance to stop the iterations.
@@ -20,8 +22,15 @@ def nmf_als(V, K, iteration=200, tol=1, alpha=0.01):
         W (numpy.ndarray): The factorization matrix of shape (m, rank).
         H (numpy.ndarray): The factorization matrix of shape (rank, n).
     """
+    # convert higher dims to 2d
+    V = convert_higher_dims_to_2d(V)
+
     # Shape of the original vector
     m, n = V.shape
+
+    # normalise here to [0-1]
+    normalisation = Normalisation()
+    V = normalisation.train_normalize_min_max(V)
 
     # Initialize W and H with random non-negative values
     np.random.seed(0)
@@ -45,16 +54,23 @@ def nmf_als(V, K, iteration=200, tol=1, alpha=0.01):
     return W, H
 
 def lda(k: int, data_collection: np.ndarray) -> np.ndarray:
-    '''
+    """
     returns reduced matrix using sklearn's LDA inbuilt function
-    negative values do not work well with model => handle somehow
+    Parameters: 
+        k (int): Desired input for dimensions required
+        data_collections (numpy.ndarray): The input data matrix of shape (m, ...)
+    Returns:
+        reduced_data (numpy.ndarray): Data matrix of shape (m, k)
     source code reference: https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.LatentDirichletAllocation.html#sklearn.decomposition.LatentDirichletAllocation
     inbuilt-method: https://github.com/scikit-learn/scikit-learn/blob/d99b728b3/sklearn/base.py#L888
     explanation: https://scikit-learn.org/stable/modules/decomposition.html#latentdirichletallocation
-    '''
+    """
     # converting data_collection from multi dimensions to 2 dimensions
-    if data_collection.ndim >= 2:
-        data_collection = data_collection.flatten()
+    data_collection = convert_higher_dims_to_2d(data_collection)
+    
+    # normalise value to [0,1]
+    normalisation = Normalisation()
+    data_collection = normalisation.train_normalize_min_max(data_collection)
     
     # there is something weird, for k = 1, currently raising error
     if k == 1: 

@@ -8,6 +8,7 @@ from matplotlib import pyplot
 from torchvision import datasets
 # from ordered_set import OrderedSet
 from PIL import Image
+import numpy as np
 
 feature_model  = {
     1 : "color_moments",
@@ -32,6 +33,19 @@ def int_input(default_value: int = 99) -> int:
         print(f'No proper value was passed, Default value was used')
         return default_value
 
+def convert_higher_dims_to_2d(data_collection: np.ndarray) -> np.ndarray:
+    '''
+    Converts higher dimension vector to 2d vector
+    Parameters:
+        data_collection: numpy.ndarray vector of higher dimensions
+    Returns:
+        returns numpy.ndarray vector of two dimensions
+    '''
+    if data_collection.ndim > 2:
+        og_shape = data_collection.shape
+        new_shape = (og_shape[0], np.prod(og_shape[1:]))
+        data_collection = data_collection.reshape(new_shape)
+    return data_collection
 
 # for query image id, return label name for it
 def name_for_label_index(dataset: torchvision.datasets.Caltech101, index: int) -> str:
