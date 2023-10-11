@@ -3,13 +3,13 @@ import numpy as np
 import torch
 from tqdm import tqdm
 from sklearn.decomposition import LatentDirichletAllocation as LDA
-from sklearn.cluster import KMeans
 import mongo_query
 from sklearn.svm import SVC
 from sklearn.metrics import confusion_matrix
 import seaborn as sns
 import numpy as np
 from matplotlib import pyplot as plt
+import distances
 
 def nmf_als(V, K, iteration=200, tol=1, alpha=0.01):
     """
@@ -87,24 +87,83 @@ def K_means(k, data_collection):
     if data_collection.ndim >= 2:
         data_collection = data_collection.reshape(data_collection.shape[0], -1)
         print("Reshaped Data Shape ", data_collection.shape)
+    
+    # ------ TRIED With library
     # json_data = mongo_query.query_all("fc_layer")
     # all_labels = [json_data[key]["label"] for key in range(0,8677, 1)]
     # unique_labels = np.unique(all_labels)
     # print(unique_labels.shape)
     # feature_descriptors = [json_data[key]["feature_descriptor"] for key in range(0,8677, 2)]
-    # feature_descriptors_label = [json_data[key]["label"] for key in range(0,8677, 2)]
-    # feature_descriptors_test = [json_data[key]["feature_descriptor"] for key in range(1,8677, 100)]
-    # feature_descriptors_test_label = [json_data[key]["label"] for key in range(1,8677, 100)]
     
-    kmeans = KMeans(n_clusters=k, init='k-means++', max_iter=300, n_init=10, random_state=0)
-    cluster_assignments = kmeans.fit_predict(data_collection)
+    # kmeans = KMeans(n_clusters=k, init='k-means++', max_iter=300, n_init=10, random_state=0)
+    # cluster_assignments = kmeans.fit_predict(data_collection)
+
+    def initialize_centroids(data, k):
+        np.random.seed(0) # IMP: to produce same sequence everytime
+        indices = np.random.choice(len(data), k, replace=False)
+        # selected 'k' random data points to be centroids
+        centroids = data[indices]
+        return centroids
+
+    # Assign data point to the nearest centroid
+    def assign_to_centroids(data, centroids):
+        # Initialize an array to store the cluster assignments
+        cluster_assignment = np.zeros(len(data), dtype=float)
+
+        for i in range(len(data)): # for each data point
+            min_distance = float('inf')
+            for j in range(len(centroids)): # check with each centroid of cluster
+                distance = distances.euclidean_distance(data[i], centroids[j])
+                if distance < min_distance:
+                    min_distance = distance
+                    cluster_assignment[i] = j  # Assign the data point to the nearest centroid
+        return cluster_assignment
+
+    # Update centroids as the mean of the assigned data points
+    def update_centroids(data, cluster_assignment, k):
+        new_centroids = np.zeros((k, data.shape[1]))
+        for i in range(k):
+            new_centroids[i] = np.mean(data[cluster_assignment == i], axis=0)
+        return new_centroids
+    
+    # K-means clustering
+    def k_means(data, k, max_iterations=300, n_init=10):
+        best_centroids, best_inertia = None, float('inf')
+        for _ in range(n_init):
+            # This is the basic approach
+            centroids = initialize_centroids(data, k)
+            for _ in range(max_iterations):
+                cluster_assignments = assign_to_centroids(data, centroids)
+                new_centroids = update_centroids(data, cluster_assignments, k)
+                if np.all(centroids == new_centroids):
+                    # same centroid is getting created
+                    print(f"same centroid formed, breaking loop")
+                    break
+                centroids = new_centroids
+            # We will check for intertia here
+            current_inertia = 0
+            for i in range(k):
+                # Calculate the squared Euclidean distance for data points in cluster i
+                cluster_points = data[cluster_assignments == i]
+                centroid = centroids[i]
+                squared_distances = distances.euclidean_distance(cluster_points, centroid)
+                current_inertia += np.sum(squared_distances)
+                # print("current intertia = ", current_inertia)
+            
+            if current_inertia < best_inertia:
+                best_centroids, best_inertia = centroids, current_inertia
+        return best_centroids
+    
+    Centroids = k_means(data_collection, k)
 
 
-    C = kmeans.cluster_centers_
-    print("Cluster Shape = ", C.shape)
+    # C = kmeans.cluster_centers_
+    # print("Cluster Shape = ", C.shape)
     # Using the Clusters find the latent semantic features 
-    X_r = extractDistanceFeatures(data_collection,C)
+    # X_r = extractDistanceFeatures(data_collection,C)
+    X_r = extractDistanceFeatures(data_collection, Centroids)
     print("Latent Semantics Shape = ", X_r.shape)
+    print(X_r)
     return X_r
     
 
