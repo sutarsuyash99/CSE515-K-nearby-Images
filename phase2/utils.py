@@ -136,7 +136,7 @@ def get_user_selected_feature_model():
         case 1: model_space = torch.load('color_moments.pkl')
         case 2: model_space = torch.load('hog.pkl') 
         case 3: model_space = torch.load('layer3_vectors.pkl') 
-        case 4: model_space = torch.load('fc_layer_vectors.pkl') 
+        case 4: model_space = torch.load('avgpool_vectors.pkl') 
         case 5: model_space = torch.load('fc_layer_vectors.pkl') 
         case default: print('No matching input was selected')
     return model_space, option

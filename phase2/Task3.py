@@ -2,7 +2,6 @@ import torch
 import utils
 import dimension_reduction as dr
 import numpy as np
-import pandas as pd
 import distances
 
 featues = {1: "",}
@@ -22,7 +21,7 @@ class task3:
             case 1: W, _ = dr.SVD()
             case 2: W, _ = dr.nmf_als(V, k)
             case 3: model_space = dr.LDA()
-            case 4: model_space = dr.K_means()
+            case 4: W = dr.K_means(k, V)
             case default: print('No matching input was selected')
         
         path =  str(utils.feature_model[feature]) + "_" + str(utils.latent_semantics[ls_option]) + "_" + str(k) + ".pkl"

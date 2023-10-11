@@ -3,7 +3,13 @@ import numpy as np
 import torch
 from tqdm import tqdm
 from sklearn.decomposition import LatentDirichletAllocation as LDA
-
+from sklearn.cluster import KMeans
+import mongo_query
+from sklearn.svm import SVC
+from sklearn.metrics import confusion_matrix
+import seaborn as sns
+import numpy as np
+from matplotlib import pyplot as plt
 
 def nmf_als(V, K, iteration=200, tol=1, alpha=0.01):
     """
@@ -66,3 +72,70 @@ def lda(k: int, data_collection: np.ndarray) -> np.ndarray:
     reduced_data = lda_model.fit_transform(data_collection)
     print(f'Reducing {data_collection.shape} => {reduced_data.shape}')
     return reduced_data
+
+def extractDistanceFeatures(X,C):
+    X_r = []
+    for i in range(C.shape[0]):
+        ci = C[i,:]
+        di = np.sum((X-ci)**2,axis=1)
+        X_r.append(di)
+    return np.array(X_r).T
+
+def K_means(k, data_collection):
+    print("Original Shape ", data_collection.shape)
+    
+    if data_collection.ndim >= 2:
+        data_collection = data_collection.reshape(data_collection.shape[0], -1)
+        print("Reshaped Data Shape ", data_collection.shape)
+    # json_data = mongo_query.query_all("fc_layer")
+    # all_labels = [json_data[key]["label"] for key in range(0,8677, 1)]
+    # unique_labels = np.unique(all_labels)
+    # print(unique_labels.shape)
+    # feature_descriptors = [json_data[key]["feature_descriptor"] for key in range(0,8677, 2)]
+    # feature_descriptors_label = [json_data[key]["label"] for key in range(0,8677, 2)]
+    # feature_descriptors_test = [json_data[key]["feature_descriptor"] for key in range(1,8677, 100)]
+    # feature_descriptors_test_label = [json_data[key]["label"] for key in range(1,8677, 100)]
+
+    kmeans = KMeans(n_clusters=k, init='k-means++', max_iter=300, n_init=10, random_state=0)
+    cluster_assignments = kmeans.fit_predict(data_collection)
+
+
+    C = kmeans.cluster_centers_
+    print("Cluster Shape = ", C.shape)
+
+    X_r = extractDistanceFeatures(data_collection,C)
+    print("Latent Semantics Shape = ", X_r.shape)
+    return X_r
+    
+
+    # clf = SVC().fit(X_r, feature_descriptors_label)
+    # X_test_r = extractDistanceFeatures(feature_descriptors_test,C)
+
+    # y_pred = clf.predict(X_test_r)
+
+    # mat = confusion_matrix(feature_descriptors_test_label,y_pred)
+    # sns.set()
+    # sns.heatmap(mat.T,square=True,annot=True,fmt='d',cbar=False,
+    #             xticklabels=np.unique(all_labels),yticklabels=np.unique(all_labels))
+    # plt.xlabel("True label")
+    # plt.ylabel("predicted label")
+    # plt.show()
+
+
+    # imageID_weight_pairs = []
+    # for i in range(k):
+    #     cluster_centroid = C[i]
+    #     cluster_weights = np.abs(cluster_centroid)
+    #     cluster_indices = np.where(cluster_assignments == i)[0]
+
+    #     # Iterate through the data points in the cluster and associate them with weights
+    #     for index in cluster_indices:
+    #         imageID_weight_pairs.append((index, cluster_weights))
+
+    # # Sort the imageID-weight pairs by weights in descending order
+    # imageID_weight_pairs.sort(key=lambda x: -x[1][1])
+
+    # # Print or store the imageID-weight pairs
+    # for i, (imageID, weight) in enumerate(imageID_weight_pairs, start=1):
+    #     print(f"ImageID: {imageID}, Weight: {weight}")
+    return
