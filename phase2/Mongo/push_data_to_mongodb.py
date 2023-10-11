@@ -1,4 +1,4 @@
-import mongo_connection
+from . import mongo_connection
 import pickle
 import utils
 import torch
@@ -33,22 +33,20 @@ def combine_data(filename, labelled_data):
 def process():
     labelled_data = utils.get_image_categories()
     # avgpool vectors
-    data = combine_data("CSE515_PKL_Files/avgpool_vectors.pkl", labelled_data)
+    data = combine_data("avgpool_vectors.pkl", labelled_data)
     upsert_data("avgpool", data)
     # Color_moments_vectors.pkl
-    data = combine_data("CSE515_PKL_Files/Color_moments_vectors.pkl", labelled_data)
+    data = combine_data("Color_moments_vectors.pkl", labelled_data)
     upsert_data("color_moment", data)
     # fc_layer_vectors.pkl
-    data = combine_data("CSE515_PKL_Files/fc_layer_vectors.pkl", labelled_data)
+    data = combine_data("fc_layer_vectors.pkl", labelled_data)
     upsert_data("fc_layer", data)
     # HOG_vectors.pkl
-    data = combine_data("CSE515_PKL_Files/HOG_vectors.pkl", labelled_data)
+    data = combine_data("HOG_vectors.pkl", labelled_data)
     upsert_data("hog", data)
     # layer3_vectors.pkl
-    data = combine_data("CSE515_PKL_Files/layer3_vectors.pkl", labelled_data)
+    data = combine_data("layer3_vectors.pkl", labelled_data)
     upsert_data("layer3", data)
     # resnet_vectors.pkl
-    data = combine_data("CSE515_PKL_Files/resnet_vectors.pkl", labelled_data)
+    data = combine_data("resnet_vectors.pkl", labelled_data)
     upsert_data("resnet_final", data)
-    
-process()

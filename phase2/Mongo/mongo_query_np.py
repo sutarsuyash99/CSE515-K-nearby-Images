@@ -1,5 +1,5 @@
-import mongo_query
-from mongo_query import *
+from . import mongo_query
+from .mongo_query import *
 import numpy as np
 from pymongo import MongoClient
 

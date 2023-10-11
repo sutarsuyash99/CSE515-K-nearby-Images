@@ -1,4 +1,4 @@
-import mongo_connection
+from . import mongo_connection
 from bson.json_util import dumps
 import json
 

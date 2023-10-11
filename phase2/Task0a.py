@@ -88,7 +88,7 @@ class Task0a():
         self.empty_collections('resnet_final')
 
         if Pickle_Flag:
-            
+            print("Starting loading form pickle files")
             labelled_data = utils.get_image_categories()
             # avgpool vectors
             data = combine_data("avgpool_vectors.pkl", labelled_data)
