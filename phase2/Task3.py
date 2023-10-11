@@ -16,11 +16,14 @@ class task3:
         k = utils.get_user_input_k()
         ls_option = utils.get_user_selected_dim_reduction()
 
+        # V -Input matrix with all the even images
         V = np.array([data[key] for key in range(0, 8677, 2)])
+
+        # W is matrix with M x K dimension matrix with latent semantics
         match ls_option:
             case 1: W, _ = dr.SVD()
             case 2: W, _ = dr.nmf_als(V, k)
-            case 3: model_space = dr.LDA()
+            case 3: W = dr.LDA()
             case 4: W = dr.K_means(k, V)
             case default: print('No matching input was selected')
         
