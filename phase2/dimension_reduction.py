@@ -95,14 +95,14 @@ def K_means(k, data_collection):
     # feature_descriptors_label = [json_data[key]["label"] for key in range(0,8677, 2)]
     # feature_descriptors_test = [json_data[key]["feature_descriptor"] for key in range(1,8677, 100)]
     # feature_descriptors_test_label = [json_data[key]["label"] for key in range(1,8677, 100)]
-
+    
     kmeans = KMeans(n_clusters=k, init='k-means++', max_iter=300, n_init=10, random_state=0)
     cluster_assignments = kmeans.fit_predict(data_collection)
 
 
     C = kmeans.cluster_centers_
     print("Cluster Shape = ", C.shape)
-
+    # Using the Clusters find the latent semantic features 
     X_r = extractDistanceFeatures(data_collection,C)
     print("Latent Semantics Shape = ", X_r.shape)
     return X_r
@@ -120,22 +120,4 @@ def K_means(k, data_collection):
     # plt.xlabel("True label")
     # plt.ylabel("predicted label")
     # plt.show()
-
-
-    # imageID_weight_pairs = []
-    # for i in range(k):
-    #     cluster_centroid = C[i]
-    #     cluster_weights = np.abs(cluster_centroid)
-    #     cluster_indices = np.where(cluster_assignments == i)[0]
-
-    #     # Iterate through the data points in the cluster and associate them with weights
-    #     for index in cluster_indices:
-    #         imageID_weight_pairs.append((index, cluster_weights))
-
-    # # Sort the imageID-weight pairs by weights in descending order
-    # imageID_weight_pairs.sort(key=lambda x: -x[1][1])
-
-    # # Print or store the imageID-weight pairs
-    # for i, (imageID, weight) in enumerate(imageID_weight_pairs, start=1):
-    #     print(f"ImageID: {imageID}, Weight: {weight}")
     return
