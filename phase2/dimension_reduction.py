@@ -98,8 +98,9 @@ def K_means(k, data_collection):
     # kmeans = KMeans(n_clusters=k, init='k-means++', max_iter=300, n_init=10, random_state=0)
     # cluster_assignments = kmeans.fit_predict(data_collection)
 
-    def initialize_centroids(data, k):
-        np.random.seed(0) # IMP: to produce same sequence everytime
+    def initialize_centroids(data, k, seed_):
+        # random number generator
+        np.random.seed(seed_) # IMP: to produce same sequence everytime
         indices = np.random.choice(len(data), k, replace=False)
         # selected 'k' random data points to be centroids
         centroids = data[indices]
@@ -129,9 +130,9 @@ def K_means(k, data_collection):
     # K-means clustering
     def k_means(data, k, max_iterations=300, n_init=10):
         best_centroids, best_inertia = None, float('inf')
-        for _ in range(n_init):
+        for x in range(n_init):
             # This is the basic approach
-            centroids = initialize_centroids(data, k)
+            centroids = initialize_centroids(data, k, x)
             for _ in range(max_iterations):
                 cluster_assignments = assign_to_centroids(data, centroids)
                 new_centroids = update_centroids(data, cluster_assignments, k)
