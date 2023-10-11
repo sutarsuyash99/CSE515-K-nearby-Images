@@ -8,7 +8,7 @@ from matplotlib import pyplot
 from torchvision import datasets
 # from ordered_set import OrderedSet
 from PIL import Image
-import numpy
+import numpy as np
 
 feature_model  = {
     1 : "color_moments",
@@ -33,7 +33,7 @@ def int_input(default_value: int = 99) -> int:
         print(f'No proper value was passed, Default value was used')
         return default_value
 
-def convert_higher_dims_to_2d(data_collection: numpy.ndarray) -> numpy.ndarray:
+def convert_higher_dims_to_2d(data_collection: np.ndarray) -> np.ndarray:
     '''
     Converts higher dimension vector to 2d vector
     Parameters:
