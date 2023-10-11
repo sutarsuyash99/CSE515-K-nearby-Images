@@ -1,7 +1,7 @@
 from typing import Tuple
 import math
 from collections import defaultdict
-
+from PIL import ImageOps
 import torchvision
 import torch
 from matplotlib import pyplot
@@ -173,6 +173,40 @@ def get_user_selected_dim_reduction():
     option = int_input()
     return option
 
+def get_cv2_image(image_id):
+    """Given an Image ID this function return the image in cv2/numpy format"""
+    dataset = datasets.Caltech101(root="./", download=True)
+    image, label = dataset[int(image_id)]
+    # Converting the Image to opencv/numpy format
+    cv2_image = np.array(image)
+    return cv2_image
+
+def get_cv2_image_grayscale(image_id):
+    """Given an Image ID this function returns the grayscale image in cv2/numpy format"""
+    dataset = datasets.Caltech101(root="./", download=True)
+    image, label = dataset[int(image_id)]
+    # Converting the Image to opencv/numpy format
+    pil_img = ImageOps.grayscale(image)
+    # cv2_image = np.array(image)
+    cv2_image = np.array(pil_img)
+    return cv2_image
+
+def check_rgb_change_grayscale_to_rgb(image):
+    """This function check if the image is rgb and if not then converts the grayscale image to rgb"""
+
+    if image.mode == 'RGB':
+        return image
+    else:
+        rgb_image = image.convert('RGB')
+        return rgb_image
+    
+def convert_image_to_grayscale(image):
+    """Converts the pil image to grayscale and then converting to cv2"""
+
+    gray_image = ImageOps.grayscale(image)
+    cv2_image = np.array(gray_image)
+
+    return cv2_image
 
 def label_feature_descriptor_fc(): 
 
