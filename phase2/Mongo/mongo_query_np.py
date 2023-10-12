@@ -34,3 +34,11 @@ def get_feature_descriptor(collection_name, imageID):
     return feature_descriptor
 
 
+def get_entire_collection(collection_name):
+    """Gives the entire data that is saved in Monog with Label and Image ID"""
+    collection  = get_collection(collection_name)
+    all_vectors = collection.find()
+    data = []
+    for document in all_vectors:
+        data.append(document)
+    return data

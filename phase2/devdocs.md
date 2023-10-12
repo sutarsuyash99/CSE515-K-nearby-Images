@@ -9,3 +9,9 @@
 2. `util.py` and `common.py` will be shared codebase for utility function
 3. `data` folder will contain the database
 4. You can use `test.py` (It is not updated or versioned on git)
+
+### Mongo Installation Steps
+brew install mongodb-community
+brew services start mongodb/brew/mongodb-community "To activate the database"
+mongorestore --db feature_descriptors /Users/hardikpatel/Desktop/CSE515-K-nearby-Images/feature_descriptors if you have the data
+

@@ -10,6 +10,7 @@ import distances
 
 from normalisation import *
 from utils import convert_higher_dims_to_2d
+import tensorly as tl
 
 
 def svd(data_matrix : np.ndarray, k=None, center=True ) -> np.ndarray :
@@ -55,7 +56,8 @@ def svd(data_matrix : np.ndarray, k=None, center=True ) -> np.ndarray :
     V = sorted_eigenvectors
     VT = V.T
     
-    #Calculate the core matrix S 
+    #Calculate the core matrix S
+    # TODO Figure out rather to do .real or .pinv for dealing with imaginary values 
     singular_values = np.sqrt(sorted_eigenvalues) 
     S = np.diag(singular_values)
     SI = np.linalg.inv(S)
@@ -79,6 +81,8 @@ def svd(data_matrix : np.ndarray, k=None, center=True ) -> np.ndarray :
             return U[:,:k], S[:k,:k], VT[:k,:]
         else  :
             raise ValueError("k is higher than the discovered latent features")
+    # Temp Fix
+    U = U.real
     return U,S,VT
 
 
@@ -128,6 +132,19 @@ def nmf_als(V, K, iteration=200, tol=1, alpha=0.01):
     print(residual)
     return W, H
 
+def cp_decompose(data, rank):
+    """CP deocompose using Tensorly with Parafac, This decomposes the 3rd Order tensor to weights and Factors
+    Parameters:
+        k (int): Desired input for dimensions required
+        Data : 3rd Order tensor with shape of 4339(images) x fearure_shape x 101(labels)
+    returns :
+        Factors containing Image Weights , Label wieghts and Feature weight matrix
+        Weights of the core tensor
+        """
+    factors = tl.decomposition.parafac2(data, rank, n_iter_max=5, init='random', verbose=1, normalize_factors=True)
+
+    return factors
+
 def lda(k: int, data_collection: np.ndarray) -> np.ndarray:
     """
     returns reduced matrix using sklearn's LDA inbuilt function
@@ -152,7 +169,7 @@ def lda(k: int, data_collection: np.ndarray) -> np.ndarray:
         # every value comes out as [1.]
         raise ValueError
 
-    lda_model = LDA(n_components=k, max_iter=10, random_state=42, learning_method='batch')
+    lda_model = LDA(n_components=k, max_iter=10, random_state=42, learning_method='batch', verbose=1)
     # print(train_data.shape[0] == len(train_label))
     reduced_data = lda_model.fit_transform(data_collection)
     print(f'Reducing {data_collection.shape} => {reduced_data.shape}')

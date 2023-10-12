@@ -4,7 +4,7 @@ import dimension_reduction as dr
 import numpy as np
 import distances
 
-featues = {1: "",}
+
 class task3:
     def __init__(self) -> None:
         pass
@@ -21,25 +21,39 @@ class task3:
 
         # W is matrix with M x K dimension matrix with latent semantics
         match ls_option:
-            case 1: W, _ = dr.SVD()
-            case 2: W, _ = dr.nmf_als(V, k)
-            case 3: W = dr.LDA()
+            case 1: W, _ , _ = dr.svd(V, k)
+            case 2: W, _  = dr.nmf_als(V, k)
+            case 3: W = dr.lda(k, V)
             case 4: W = dr.K_means(k, V)
             case default: print('No matching input was selected')
         
         path =  str("./LatentSemantics/LS1/LS1_" + utils.feature_model[feature]) + "_" + str(utils.latent_semantics[ls_option]) + "_" + str(k) + ".pkl"
         torch.save(W, path)
         print("Output file is saved with name - " + path)
+        data = W
+
+        # Printing the ImageID weight pairs in decreasing order
+        utils.print_decreasing_weights(data, "ImageID")
+        print("Exiting Task3 .............")
 
 if __name__ == "__main__":
     temp = task3()
     temp.k_latent_semantics()
-    # data = torch.load("avgpool_layer_NNMF_1.pkl")
-    # # val = distances.cosine_similarity(data[0],data[4000])
-    # val = distances.euclidean_distance(data[0],data[2])
-    # print(val)
-    # # df = pd.DataFrame(data)
-    # # print(df)
-    # # val  = df.sort_values(by = [0], ascending=False)
-    # # print(val)
-    # # print(data[736])
+    # data = torch.load("./LatentSemantics/LS1/LS1_avgpool_layer_K_means_10.pkl")
+    
+    # df = pd.DataFrame()
+    # k = 10
+    # for val in range(k):
+    #     ls = data[: ,val]
+    #     indexed_list = list(enumerate(ls))
+    #     sorted_list = sorted(indexed_list, key=lambda x: x[1])
+    #     sorted_list.reverse()
+    #     df["LS"+str(val+1) + "  ImageID, Weight"] = sorted_list
+    #     output_list = sorted_list[- (k+1):].copy()
+    #     output_list.reverse()
+    #     print("Column : " + str(val))
+    #     print("Output Format - ImageID, Weight")
+    #     print(output_list)
+    #     print("\n"*1)
+    # print("Exiting Task3 .............")
+    
