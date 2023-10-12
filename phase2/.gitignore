@@ -12,3 +12,4 @@ data/
 test*
 phase2/
 models/
+pyvenv.cfg

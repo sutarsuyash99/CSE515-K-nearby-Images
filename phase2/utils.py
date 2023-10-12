@@ -10,6 +10,13 @@ from torchvision import datasets
 # from ordered_set import OrderedSet
 from PIL import Image
 import numpy as np
+import pandas as pd
+
+pd.set_option('display.max_rows', 30)
+pd.set_option('display.max_columns', 30)
+pd.set_option('display.min_rows', 20)
+pd.set_option('display.precision', 2)
+
 
 from Mongo.mongo_query_np import get_all_feature_descriptor
 
@@ -234,6 +241,24 @@ def get_user_selected_dim_reduction():
         \n\n')
     option = int_input()
     return option
+
+def print_decreasing_weights(data, object = "ImageID"):
+    m, n = data.shape
+    df = pd.DataFrame()
+    for val in range(n):
+        ls = data[: ,val]
+        # ls = np.round(ls, 2)
+        indexed_list = list(enumerate(ls))
+        sorted_list = sorted(indexed_list, key=lambda x: x[1])
+        sorted_list.reverse()
+        if object == "ImageID":
+            sorted_list = [(x * 2, y) for x, y in sorted_list]
+        else :
+            sorted_list = [(x , y) for x, y in sorted_list]
+        df["LS"+str(val+1) + "  "+ object + ", Weights"] = sorted_list
+        df.index.name = "Rank"
+    print("Output Format - ImageID, Weight")
+    print(df)
 
 def get_cv2_image(image_id):
     """Given an Image ID this function return the image in cv2/numpy format"""
