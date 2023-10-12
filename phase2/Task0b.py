@@ -63,7 +63,6 @@ class Task0b:
             distances.append((distance, i))
         distances.sort()
         # display image
-        print(distances[0], distances[1], distances[-2], distances[-1])
         top_k = []
         for i in range(k):
             top_k.append((distances[i][1], distances[i][0]))

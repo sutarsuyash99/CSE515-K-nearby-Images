@@ -5,6 +5,14 @@ def cosine_similarity(a, b):
     cos_sim = (np.dot(a, b)) / ((np.linalg.norm(a)) * np.linalg.norm(b))
     return cos_sim
 
+def kl_divergence(a,b):
+    # To ensure both vectors are valid probability distributions
+    if not np.all(a >= 0) or not np.all(b >= 0) or not np.isclose(np.sum(a), 1.0) or not np.isclose(np.sum(b), 1.0):
+        raise ValueError("Input vectors must be valid probability distributions")
+
+    kl = np.sum(a * np.log(a / b))
+    return kl
+
 def cosine_distance(a,b):
     return 1 - cosine_similarity(a,b)
 

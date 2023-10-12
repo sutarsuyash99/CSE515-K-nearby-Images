@@ -81,7 +81,7 @@ def initialise_project():
         img, label = dataset[i]
         # label returns the array index for dataset.categories
         # labelled_images[str(label)].append(i)
-        category_name = dataset_named_categories[label].lower()
+        category_name = dataset_named_categories[label]
         labelled_images[category_name].append(i)
     return (dataset, labelled_images)
 
@@ -149,14 +149,25 @@ def get_user_selected_feature_model():
         \n\n')
     option = int_input()
     model_space = None
+    dbName = None
     match option:
-        case 1: model_space = get_all_feature_descriptor('color_moment')
-        case 2: model_space = get_all_feature_descriptor('hog')
-        case 3: model_space = get_all_feature_descriptor('avgpool')
-        case 4: model_space = get_all_feature_descriptor('layer3')
-        case 5: model_space = get_all_feature_descriptor('fc_layer')
+        case 1: dbName = 'color_moment'
+        case 2: dbName = 'hog'
+        case 3: dbName = 'avgpool'
+        case 4: dbName = 'layer3'
+        case 5: dbName = 'fc_layer'
         case default: print('No matching input was selected')
-    return model_space, option
+    if dbName is not None:
+        model_space = get_all_feature_descriptor(dbName)
+    return model_space, option, dbName
+
+def get_user_selected_feature_model_only_resnet50_output():
+    """This is a helper code which prints resnet50_final layer output"""
+    print("Model space in use -----> RESNET-50 Final layer (softmax) values")
+    dbName = 'resnet_final'
+    model_space = get_all_feature_descriptor(dbName)
+    # returning 2nd parameter to make function syntatically similar to get_user_selected_feature_model function
+    return model_space, None, dbName
 
 def get_user_input_image_id():
     """Helper function to be used in other function to take image Id from user"""

@@ -102,22 +102,22 @@ class Task0a():
             print("Starting loading form pickle files")
             labelled_data = utils.get_image_categories()
             # avgpool vectors
-            data = combine_data("./models/avgpool_vectors.pkl", labelled_data)
+            data = combine_data("avgpool_vectors.pkl", labelled_data)
             upsert_data("avgpool", onlyEvenData(data))
             # Color_moments_vectors.pkl
-            data = combine_data("./models/Color_moments_vectors.pkl", labelled_data)
+            data = combine_data("Color_moments_vectors.pkl", labelled_data)
             upsert_data("color_moment", onlyEvenData(data))
             # fc_layer_vectors.pkl
-            data = combine_data("./models/fc_layer_vectors.pkl", labelled_data)
+            data = combine_data("fc_layer_vectors.pkl", labelled_data)
             upsert_data("fc_layer", onlyEvenData(data))
             # HOG_vectors.pkl
-            data = combine_data("./models/HOG_vectors.pkl", labelled_data)
+            data = combine_data("HOG_vectors.pkl", labelled_data)
             upsert_data("hog", onlyEvenData(data))
             # layer3_vectors.pkl
-            data = combine_data("./models/layer3_vectors.pkl", labelled_data)
+            data = combine_data("layer3_vectors.pkl", labelled_data)
             upsert_data("layer3", onlyEvenData(data))
             # resnet_vectors.pkl
-            data = combine_data("./models/resnet_vectors.pkl", labelled_data)
+            data = combine_data("resnet_vectors.pkl", labelled_data)
             upsert_data("resnet_final", onlyEvenData(data))
             
         else:

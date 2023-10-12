@@ -3,12 +3,22 @@ from .mongo_query import *
 import numpy as np
 from pymongo import MongoClient
 
+def get_all_feature_descriptor_for_label(collection_name, label_name):
+    collection = get_collection(collection_name)
+    all_vectors = collection.find({"label": label_name})
+    feature_descriptors = []
+    
+    for document in all_vectors:
+        # image_ID = document.get("imageID")
+        feature_descriptor = document['feature_descriptor']
+        # feature_descriptors[image_ID] = np.array(feature_descriptor)
+        feature_descriptors.append(np.array(feature_descriptor))
+    return np.array(feature_descriptors)
+
 # Function to get all feature descriptors in numpy array for a given collection name
 def get_all_feature_descriptor(collection_name):
     collection  = get_collection(collection_name)
 
-    count = collection.count_documents({})
-    print('->>', count)
     document = collection.find_one({"imageID": 0})
     feature_descriptor = document.get("feature_descriptor")
     feature_descriptor = np.array(feature_descriptor)
