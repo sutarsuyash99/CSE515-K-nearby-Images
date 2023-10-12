@@ -8,7 +8,7 @@ from tqdm import tqdm
 from Mongo.mongo_query_np import get_all_feature_descriptor_for_label
 
 from distances import cosine_similarity
-from utils import get_user_selected_feature_model, get_user_selected_feature_model_only_resnet50_output
+from utils import get_user_selected_feature_model, get_user_selected_feature_model_only_resnet50_output, convert_higher_dims_to_2d
 
 def label_fv_kmediods(label: str, dbName: str):
     '''
@@ -17,10 +17,7 @@ def label_fv_kmediods(label: str, dbName: str):
     '''
     try:
         label_features = get_all_feature_descriptor_for_label(dbName, label)
-        if label_features.ndim > 2:
-            og_shape = label_features.shape
-            new_shape = (og_shape[0], np.prod(og_shape[1:]))
-            label_features = label_features.reshape(new_shape)
+        label_features = convert_higher_dims_to_2d(label_features)
         kmedoids = KMedoids(n_clusters=1).fit(label_features).cluster_centers_
         # print(kmedoids.shape, type(kmedoids))
         return kmedoids

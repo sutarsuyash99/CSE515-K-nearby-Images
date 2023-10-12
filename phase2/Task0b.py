@@ -21,6 +21,7 @@ class Task0b:
         (
             model_space,
             feature_space_selected,
+            dbName
         ) = utils.get_user_selected_feature_model()
         feature_space_name_selected = utils.feature_model[feature_space_selected]
         k = utils.get_user_input_k()
