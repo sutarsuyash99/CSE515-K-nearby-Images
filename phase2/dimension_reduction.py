@@ -145,7 +145,8 @@ def cp_decompose(data, rank):
 
     return factors
 
-def lda(k: int, data_collection: np.ndarray) -> np.ndarray:
+
+def lda(data_collection: np.ndarray, k: int) -> np.ndarray:
     """
     returns reduced matrix using sklearn's LDA inbuilt function
     Parameters: 
