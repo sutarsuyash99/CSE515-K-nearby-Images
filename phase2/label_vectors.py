@@ -7,7 +7,7 @@ from sklearn_extra.cluster import KMedoids
 from tqdm import tqdm
 
 from distances import cosine_similarity
-from utils import int_input
+from utils import get_user_selected_feature_model
 
 def label_fv_init(label: str, labelled_images: TypedDict, feature_space):
     cur = labelled_images[label]
@@ -56,23 +56,7 @@ def create_labelled_feature_vectors(labelled_images):
     labelled_images from map -> label_id : [images_ids]
     output format: [dict[key: label, value: feature_vector_label], model_space]
     '''    
-    print('Select your option:\
-        \n\n\
-        \n1. Color Moments\
-        \n2. Histogram of Oriented gradients\
-        \n3. RESNET-50 Layer3\
-        \n4. RESNET-50 Avgpool\
-        \n5. RESNET-50 FC\
-        \n\n')
-    option = int_input()
-    model_space = None
-    match option:
-        case 1: model_space = torch.load('color_moments.pkl')
-        case 2: model_space = torch.load('hog.pkl') 
-        case 3: model_space = torch.load('resnet_layer3.pkl') 
-        case 4: model_space = torch.load('resnet_fc.pkl') 
-        case 5: model_space = torch.load('resnet_avgpool.pkl') 
-        case default: print('No matching input was selected')
+    model_space, _ = get_user_selected_feature_model()
     if model_space is not None:
         labelled_feature_vectors = {}
         for key in labelled_images.keys():

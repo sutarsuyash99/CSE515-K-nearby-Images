@@ -2,6 +2,7 @@ from typing import Tuple
 import math
 from collections import defaultdict
 from PIL import ImageOps
+import PIL
 import torchvision
 import torch
 from matplotlib import pyplot
@@ -10,10 +11,12 @@ from torchvision import datasets
 from PIL import Image
 import numpy as np
 
+from Mongo.mongo_query_np import get_all_feature_descriptor
+
 feature_model  = {
-    1 : "color_moments",
+    1 : "color_moment",
     2 : "hog",
-    3 : "avgpool_layer",
+    3 : "avgpool",
     4 : "layer3",
     5 : "fc_layer"
 }
@@ -30,7 +33,7 @@ def int_input(default_value: int = 99) -> int:
         inpu = int(input())
         return inpu
     except ValueError:
-        print(f'No proper value was passed, Default value was used')
+        print(f'No proper value was passed, Default value of {default_value} was used')
         return default_value
 
 def convert_higher_dims_to_2d(data_collection: np.ndarray) -> np.ndarray:
@@ -140,20 +143,68 @@ def get_user_selected_feature_model():
         \n\n\
         \n1. Color Moments\
         \n2. Histogram of Oriented gradients\
-        \n3. RESNET-50 Layer3\
-        \n4. RESNET-50 Avgpool\
+        \n3. RESNET-50 Avgpool\
+        \n4. RESNET-50 Layer3\
         \n5. RESNET-50 FC\
         \n\n')
     option = int_input()
     model_space = None
     match option:
-        case 1: model_space = torch.load('color_moments.pkl')
-        case 2: model_space = torch.load('hog.pkl') 
-        case 3: model_space = torch.load('layer3_vectors.pkl') 
-        case 4: model_space = torch.load('avgpool_vectors.pkl') 
-        case 5: model_space = torch.load('fc_layer_vectors.pkl') 
+        case 1: model_space = get_all_feature_descriptor('color_moment')
+        case 2: model_space = get_all_feature_descriptor('hog')
+        case 3: model_space = get_all_feature_descriptor('avgpool')
+        case 4: model_space = get_all_feature_descriptor('layer3')
+        case 5: model_space = get_all_feature_descriptor('fc_layer')
         case default: print('No matching input was selected')
     return model_space, option
+
+def get_user_input_image_id():
+    """Helper function to be used in other function to take image Id from user"""
+    print("Please enter the value of ImageId: ")
+    return int_input()
+
+def get_user_external_image_path():
+    """
+    Helper function to be used in other functions to get external image path 
+    and open and show image
+    """
+    print("Please provide path to image as input: consider full path")
+    file_path = input()
+    try:
+        img = Image.open(file_path)
+        return img
+    except FileNotFoundError:
+        print(f"File path not improper, file does not exist")
+    except PIL.UnidentifiedImageError:
+        print("Image could not be indentified or opened")
+    except Exception as e:
+        print(f'There was {e} encountered')
+    return None
+
+def get_user_input_internalexternal_image():
+    """
+    Helper function to be used to either get an external/internal image
+    parameters:
+        None
+    Returns:
+        Tuple: (ImageId, PIL)
+            ImageId: returns ImageId if internal dataset, if external -1 will be returned
+            PIL: None if internal dataset, for external file it will be non None
+    internal image: present in dataset, may or may not be present in database
+    external image: not in dataset and not in database
+    """
+    print("Select your option:\
+          \n\n\
+          \n1. Dataset Image\
+          \n2. External Image\
+          \n\n")
+    selection = int_input(1)
+    if selection == 1:
+        return (get_user_input_image_id(), None) 
+    else:
+        # take path from user
+        return (-1, get_user_external_image_path())
+
 
 def get_user_input_k():
     """Helper function to be used in other functions to take input from user for K"""

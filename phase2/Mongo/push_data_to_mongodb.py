@@ -26,6 +26,7 @@ def upsert_data(collection_name, data):
         print("Inserted document ID:", result.inserted_id)
 
 def combine_data(filename, labelled_data):
+    # TODO: if PKL file is not present, compute it then and there
     file_data = read_file(filename)
     data = get_data_to_store(file_data, labelled_data)
     return data

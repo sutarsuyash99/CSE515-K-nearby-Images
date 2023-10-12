@@ -56,7 +56,7 @@ class resnet_features():
             val = resnet50_model(model_input_image)
             
 
-    def resnet_avgpool(self, image):
+    def resnet_avgpool(self):
         """Get feature vectors from avgpool layer of the """
 
         vector_output = self.hook_avgpool_output[0].squeeze()
@@ -71,7 +71,7 @@ class resnet_features():
         return vector_1024
 
 
-    def resnet_layer3(self, image):
+    def resnet_layer3(self):
         """Gets feature vectors from layer3 layer of resnet"""
 
         vector_output = self.hook_layer3_output[0].squeeze()
@@ -84,7 +84,7 @@ class resnet_features():
         return vector_1024
 
 
-    def resnet_fc_layer(self, image):
+    def resnet_fc_layer(self):
         """Get feature vectors from fc layer""" 
 
         vector_output = self.hook_fc_layer_output[0].squeeze()
