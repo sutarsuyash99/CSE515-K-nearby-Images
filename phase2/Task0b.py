@@ -1,22 +1,28 @@
 import utils
-from distances import cosine_distance
-import label_vectors
 from Mongo.mongo_query_np import get_feature_descriptor
+from distances import cosine_distance
 from resnet_50 import resnet_features
 from Image_color_moment import color_moments
 from get_hist_og import histogram_of_oriented_gradients
 
-class Task2a:
+
+class Task0b:
     def __init__(self) -> None:
         self.dataset, self.labelled_images = utils.initialise_project()
-    
-    def image_query_top_k(self):
-        print("*"*25, 'SUB-MENU', '*'*25)
-        print('\n\nSelect your option')
 
-        labelled_feature_vectors, model_space, feature_space_selected = label_vectors.create_labelled_feature_vectors(self.labelled_images)
+    def image_image_distance(self):
+        """This programs is image-image distance function and display k top matches"""
+        print("*" * 25 + " Task 0b " + "*" * 25)
+        print("Please select from below mentioned options")
+        # take inputs imageId, external image, feature space, k
+
+        # ImageId, PILImage gets user inputs and handles exception if any
         imageId, img = utils.get_user_input_internalexternal_image()
-
+        (
+            model_space,
+            feature_space_selected,
+            dbName
+        ) = utils.get_user_selected_feature_model()
         feature_space_name_selected = utils.feature_model[feature_space_selected]
         k = utils.get_user_input_k()
         feature_vector_imageId = get_feature_descriptor(
@@ -24,6 +30,8 @@ class Task2a:
         )
 
         if feature_vector_imageId is None:
+            # construct metric for that image by running model space on the image provided
+            print("Constructing vector for image -- on demand")
             if imageId != -1:
                 img, _ = self.dataset[imageId]
             if feature_space_name_selected in {"avgpool", "layer3", "fc_layer"}:
@@ -41,22 +49,31 @@ class Task2a:
             else:
                 hog = histogram_of_oriented_gradients()
                 feature_vector_imageId = hog.compute_hog(img)
-        else: 
-            img, _ = self.dataset[imageId]
+            # TODO: show this in same subplot
+            utils.display_image_og(pil_img=img)
+        else:
+            # if image is in database, increment k by 1 and show all images in same subplot
+            k = k + 1
 
-        utils.display_image_og(img)
-        
+        # display top k image from DB
         distances = []
-        for i in labelled_feature_vectors.keys():
-            cur_distance = cosine_distance( feature_vector_imageId.flatten(), labelled_feature_vectors[i].flatten() )
-            distances.append((cur_distance, i))
+        for i in range(len(model_space)):
+            distance = cosine_distance(
+                feature_vector_imageId.flatten(), model_space[i].flatten()
+            )
+            distances.append((distance, i))
         distances.sort()
-        
+        # display image
         top_k = []
         for i in range(k):
             top_k.append((distances[i][1], distances[i][0]))
+        print('\n\n','-'*50)
         print(top_k)
+        print('-'*50, '\n\n')
 
-if __name__ == '__main__':
-    task2a = Task2a()
-    task2a.image_query_top_k()
+        utils.display_k_images_subplots(self.dataset, top_k, "Top K images")
+
+
+if __name__ == "__main__":
+    task0b = Task0b()
+    task0b.image_image_distance()

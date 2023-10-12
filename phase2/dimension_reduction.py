@@ -128,7 +128,7 @@ def nmf_als(V, K, iteration=200, tol=1, alpha=0.01):
     print(residual)
     return W, H
 
-def lda(k: int, data_collection: np.ndarray) -> np.ndarray:
+def lda(data_collection: np.ndarray, k: int) -> np.ndarray:
     """
     returns reduced matrix using sklearn's LDA inbuilt function
     Parameters: 

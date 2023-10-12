@@ -35,9 +35,9 @@ class Task0a():
 
         # To run the resnet50 model
         run_model = resnet.run_model(image)
-        avgpool_features = resnet.resnet_avgpool(image)
-        layer3_features = resnet.resnet_layer3(image)
-        fc_layer_features = resnet.resnet_fc_layer(image)
+        avgpool_features = resnet.resnet_avgpool()
+        layer3_features = resnet.resnet_layer3()
+        fc_layer_features = resnet.resnet_fc_layer()
         softmax_features = resnet.apply_softmax()
 
         
@@ -87,27 +87,38 @@ class Task0a():
         self.empty_collections('fc_layer')
         self.empty_collections('resnet_final')
 
+        def onlyEvenData(data):
+            # map = {
+            #     "imageID": imageid,
+            #     "label": labelled_data[imageid] or "unknown",
+            #     "feature_descriptor": file_data[imageid].tolist()
+            # }
+            reduced_data = []
+            for i in data:
+                if i['imageID'] % 2 == 0: reduced_data.append(i)
+            return reduced_data
+
         if Pickle_Flag:
             print("Starting loading form pickle files")
             labelled_data = utils.get_image_categories()
             # avgpool vectors
             data = combine_data("avgpool_vectors.pkl", labelled_data)
-            upsert_data("avgpool", data)
+            upsert_data("avgpool", onlyEvenData(data))
             # Color_moments_vectors.pkl
             data = combine_data("Color_moments_vectors.pkl", labelled_data)
-            upsert_data("color_moment", data)
+            upsert_data("color_moment", onlyEvenData(data))
             # fc_layer_vectors.pkl
             data = combine_data("fc_layer_vectors.pkl", labelled_data)
-            upsert_data("fc_layer", data)
+            upsert_data("fc_layer", onlyEvenData(data))
             # HOG_vectors.pkl
             data = combine_data("HOG_vectors.pkl", labelled_data)
-            upsert_data("hog", data)
+            upsert_data("hog", onlyEvenData(data))
             # layer3_vectors.pkl
             data = combine_data("layer3_vectors.pkl", labelled_data)
-            upsert_data("layer3", data)
+            upsert_data("layer3", onlyEvenData(data))
             # resnet_vectors.pkl
             data = combine_data("resnet_vectors.pkl", labelled_data)
-            upsert_data("resnet_final", data)
+            upsert_data("resnet_final", onlyEvenData(data))
             
         else:
             
@@ -136,4 +147,4 @@ class Task0a():
 
 if __name__ == '__main__':
     task = Task0a()
-    task.store_all_feature_vectors()
+    task.store_all_feature_vectors(True)
