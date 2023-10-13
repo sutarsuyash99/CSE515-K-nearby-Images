@@ -157,6 +157,7 @@ def get_user_selected_feature_model():
         \n3. RESNET-50 Avgpool\
         \n4. RESNET-50 Layer3\
         \n5. RESNET-50 FC\
+        \n6. RESNET Final\
         \n\n')
     option = int_input()
     model_space = None
@@ -167,6 +168,7 @@ def get_user_selected_feature_model():
         case 3: dbName = 'avgpool'
         case 4: dbName = 'layer3'
         case 5: dbName = 'fc_layer'
+        case 6: dbName = 'resnet_final'
         case default: print('No matching input was selected')
     if dbName is not None:
         model_space = get_all_feature_descriptor(dbName)
