@@ -43,7 +43,7 @@ def create_labelled_feature_vectors(labelled_images, task2bSpecific: bool = Fals
         model_space, option, dbName = get_user_selected_feature_model_only_resnet50_output()
     else:
         model_space, option, dbName = get_user_selected_feature_model()
-    print(f'Model space shape {model_space.shape}')
+    # print(f'Model space shape {model_space.shape}')
     if model_space is not None:
         labelled_feature_vectors = {}
         for key in labelled_images.keys():

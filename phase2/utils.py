@@ -243,6 +243,7 @@ def get_user_selected_dim_reduction():
     return option
 
 def print_decreasing_weights(data, object = "ImageID"):
+    dataset = torchvision.datasets.Caltech101(root='./data', download=True, target_type='category')
     m, n = data.shape
     df = pd.DataFrame()
     for val in range(n):
@@ -254,7 +255,8 @@ def print_decreasing_weights(data, object = "ImageID"):
         if object == "ImageID":
             sorted_list = [(x * 2, y) for x, y in sorted_list]
         else :
-            sorted_list = [(x , y) for x, y in sorted_list]
+            sorted_list = [(name_for_label_index(dataset, x) , y) for x, y in sorted_list]
+                
         df["LS"+str(val+1) + "  "+ object + ", Weights"] = sorted_list
         df.index.name = "Rank"
     print("Output Format - ImageID, Weight")
