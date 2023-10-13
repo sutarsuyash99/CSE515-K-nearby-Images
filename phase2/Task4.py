@@ -6,7 +6,7 @@ import distances
 import Mongo.mongo_query_np  as monogo_query
 from sortedcollections import OrderedSet
 
-featues = {1: "",}
+
 class task4:
     def __init__(self) -> None:
         pass
@@ -15,22 +15,16 @@ class task4:
 
         print("*"*25 + " Task 4 "+ "*"*25)
         print("Please select from below mentioned options")
-        data, feature = utils.get_user_selected_feature_model()
+        data, option, dbName = utils.get_user_selected_feature_model()
         k = utils.get_user_input_k()
-        data = monogo_query.get_entire_collection(utils.feature_model[feature])
-        val = []
-        i=0
-        for key in range(0,8677,2):
-            data[key]["imageID"] = i
-            val.append(data[key])
-            i += 1
-        # val.append(data[key] for key in range(0, 8677, 2))
+        data = monogo_query.get_entire_collection(dbName)
 
-        data = self.get_tensor(val)
+
+        data = self.get_tensor(data)
         print(len(data))
         factors = dr.cp_decompose(data,k)
         print(factors[0])
-        print(factors[1].shape)
+        
         # Getting the label weight pairs
         label_weights = factors[1][2]
         # image_weights = factors[1][0]
@@ -39,7 +33,7 @@ class task4:
         # Printing the ImageID weight pairs in decreasing order
         utils.print_decreasing_weights(label_weights, "Label")
         
-        path =  str("./LatentSemantics/LS2/LS2_" + utils.feature_model[feature]) + "_CP_decompose_" + str(k) + ".pkl"
+        path =  str("./LatentSemantics/LS2/LS2_" + dbName) + "_CP_decompose_" + str(k) + ".pkl"
         torch.save(factors, path)
         print("Output file is saved with name - " + path)
 
@@ -63,10 +57,12 @@ class task4:
         print(model.shape)
 
         #Tensor creation and assign values
+        i = 0
         for entry in required_data :
             
             image_id, feature, label_id = entry[0], entry[1], label_id_mapping.index(entry[2])
-            model[image_id, : , label_id ] = feature
+            model[i, : , label_id ] = feature
+            i += 1
 
         return model
 

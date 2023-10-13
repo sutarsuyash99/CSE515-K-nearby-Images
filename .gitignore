@@ -8,3 +8,4 @@ others/
 **/__pycache__
 **/.DS_Store
 data
+**/feature_descriptors
