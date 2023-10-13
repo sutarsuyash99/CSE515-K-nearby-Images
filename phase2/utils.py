@@ -28,7 +28,8 @@ feature_model  = {
     2 : "hog",
     3 : "avgpool",
     4 : "layer3",
-    5 : "fc_layer"
+    5 : "fc_layer",
+    6 : "resnet_final"
 }
 
 latent_semantics = {
