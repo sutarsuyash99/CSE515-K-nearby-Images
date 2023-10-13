@@ -187,7 +187,7 @@ def get_user_input_image_id():
 def get_user_input_label():
     """Helper function to be used in other function to take label"""
     print("Please enter the value of label: ")
-    label = input()
+    label = int_input(0)
     return label
 
 def get_user_input_for_saved_files(option: int):
@@ -210,7 +210,8 @@ def get_user_input_for_saved_files(option: int):
         for i in range(len(onlyfiles)):
             print(f'{i} -> {onlyfiles[i]}')
         print('\n')
-        return '.' + base_path + '/' + onlyfiles[i]
+        index = int_input(0)
+        return '.' + base_path + '/' + onlyfiles[index]
 
 def get_user_input_latent_semantics():
     """
