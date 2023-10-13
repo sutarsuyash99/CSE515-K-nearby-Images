@@ -26,7 +26,7 @@ def svd(data_matrix : np.ndarray, k=None, center=True ) -> np.ndarray :
     
     By default gives all the latent features unless k is provided.
     '''
-    
+    data_matrix = convert_higher_dims_to_2d(data_matrix)
     #Check if data_matrix is a 2D np array
     if not isinstance(data_matrix, np.ndarray) or data_matrix.ndim != 2:
         raise ValueError("Input data matrix should be a 2D numpy array")
@@ -141,7 +141,7 @@ def cp_decompose(data, rank):
         Factors containing Image Weights , Label wieghts and Feature weight matrix
         Weights of the core tensor
         """
-    factors = tl.decomposition.parafac2(data, rank, n_iter_max=5, init='random', verbose=1, normalize_factors=True)
+    factors = tl.decomposition.parafac(data, rank, n_iter_max=5, init='random', verbose=1, normalize_factors=True)
 
     return factors
 

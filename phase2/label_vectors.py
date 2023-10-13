@@ -8,7 +8,7 @@ from tqdm import tqdm
 from Mongo.mongo_query_np import get_all_feature_descriptor_for_label
 
 from distances import cosine_similarity
-from utils import get_user_selected_feature_model, get_user_selected_feature_model_only_resnet50_output, convert_higher_dims_to_2d
+from utils import get_user_selected_feature_model, get_user_selected_feature_model_only_resnet50_output, convert_higher_dims_to_2d, feature_model
 
 def label_fv_kmediods(label: str, dbName: str):
     '''
@@ -52,3 +52,15 @@ def create_labelled_feature_vectors(labelled_images, task2bSpecific: bool = Fals
             labelled_feature_vectors[key] = label_fv_kmediods(key, dbName)
         return (labelled_feature_vectors, model_space, option)
     else: return None
+
+def get_all_label_feature_vectors(labelled_images):
+    """Gets all the feature vectors output shold be 101 x 1000 Fc_layer
+       input : labelled_images
+       output : 101 x 1000 Ndarray """
+    labelled_feature_vectors = []
+    for key in labelled_images.keys():
+        # combine all feature vectors into one for label -- labelled embedding
+        # add your min, mean, max code for label here
+        labelled_feature_vectors.append(label_fv_kmediods(key, feature_model[5])[0])
+    return labelled_feature_vectors
+    
