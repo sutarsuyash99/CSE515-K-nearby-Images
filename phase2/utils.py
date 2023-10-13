@@ -7,10 +7,13 @@ import torchvision
 import torch
 from matplotlib import pyplot
 from torchvision import datasets
-# from ordered_set import OrderedSet
 from PIL import Image
 import numpy as np
 import pandas as pd
+import os
+from os import listdir
+from os.path import isfile, join
+# from ordered_set import OrderedSet
 
 pd.set_option('display.max_rows', 30)
 pd.set_option('display.max_columns', 30)
@@ -180,6 +183,62 @@ def get_user_input_image_id():
     """Helper function to be used in other function to take image Id from user"""
     print("Please enter the value of ImageId: ")
     return int_input()
+
+def get_user_input_label():
+    """Helper function to be used in other function to take label"""
+    print("Please enter the value of label: ")
+    label = input()
+    return label
+
+def get_user_input_for_saved_files(option: int):
+    """
+    Helper function which prints all available files and return file name relative from source file
+    Returns:
+        pathname: relative path to pkl from phase root folder (None if no pkl exists)
+    """
+    base_path = '/LatentSemantics/LS'+str(option)
+    dir = os.getcwd() + base_path
+    onlyfiles = []
+    for f in os.listdir(dir):
+        if (os.path.isfile(os.path.join(dir, f)) and f != '.gitkeep'):
+            onlyfiles.append(f)
+    if len(onlyfiles) == 0:
+        print('No models saved -- please run task 3-6 accordingly')
+        return None
+    else:
+        print("Please select the option file name you want")
+        for i in range(len(onlyfiles)):
+            print(f'{i} -> {onlyfiles[i]}')
+        print('\n')
+        return '.' + base_path + '/' + onlyfiles[i]
+
+def get_user_input_latent_semantics():
+    """
+    Helper function to be used in other functions to take user input
+    Parameters: None
+    Returns: 
+        path: Path to model file
+        LS-option: option need
+    LS1, LS2, LS3, LS4
+    LS1: SVD, NNMF, k-means, LDA
+    LS2: CP-decompositions
+    LS3: Label-Label similarity -> reduced space
+    LS4: Image-Image similarity -> reduced space
+    """
+    print('\n\nSelect your Latent Space: \
+          \n1. LS1 --> SVD, NNMF, kMeans, LDA\
+          \n2. LS2 --> CP-decomposition\
+          \n3. LS3 --> Label-Label similarity\
+          \n4. LS4 --> Image-Image similarity\n')
+    option = int_input(1)
+    path_to_model = None
+    match option:
+        case 1: path_to_model = get_user_input_for_saved_files(1)
+        case 2: path_to_model = get_user_input_for_saved_files(2)
+        case 3: path_to_model = get_user_input_for_saved_files(3)
+        case 4: path_to_model = get_user_input_for_saved_files(4)
+        case default: print('Nothing here ---> wrong input provided')
+    return path_to_model, option
 
 def get_user_external_image_path():
     """
