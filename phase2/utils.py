@@ -77,6 +77,11 @@ def img_label_and_named_label_for_query_int(dataset: torchvision.datasets.Caltec
         label_name = name_for_label_index(dataset, label_id)
         return (img, label_id, label_name)
 
+def get_labels():
+    dataset = torchvision.datasets.Caltech101(root='./data', download=True, target_type='category')
+    dataset_named_categories = dataset.categories
+    return dataset_named_categories
+
 def initialise_project():
     dataset = torchvision.datasets.Caltech101(root='./data', download=True, target_type='category')
 
