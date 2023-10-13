@@ -44,7 +44,7 @@ class task9:
 
         return path, detected_feature_space
 
-    def find_closest_LS3(self, latent_semantics, semantic_vector, k):
+    def find_closest_labels_with_label_reference(self, latent_semantics, semantic_vector, k):
         similarities = cosine_similarity(latent_semantics, [semantic_vector])
         distances = 1 - similarities
 
@@ -100,6 +100,11 @@ class task9:
     
     def LS2(self,selected_label, path, k):
         selected_latent_semantic, detected_feature_space = self.select_latent_semantics(path)
+        index = self.labels.index(selected_label)
+        latent_semantics = torch.load(path)
+        label_weights = latent_semantics[1][2]
+        semantic_vector = label_weights[index]
+        self.find_closest_labels_with_label_reference(label_weights, semantic_vector, k)
         return
     
     def LS3(self,selected_label, path, k):
@@ -110,7 +115,7 @@ class task9:
         latent_semantics = torch.load(path)
         semantic_vector = latent_semantics[index]
 
-        self.find_closest_LS3(latent_semantics, semantic_vector, k)
+        self.find_closest_labels_with_label_reference(latent_semantics, semantic_vector, k)
         return
     
     def LS4(self,selected_label, path, k):
