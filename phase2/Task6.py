@@ -13,20 +13,11 @@ class task6:
         """This programs is to get the input from the user and calculate the LS3 using the chosen latent semnatics"""
         print("*"*25 + " Task 6 "+ "*"*25)
         print("Please select from below mentioned options")
-        data, feature = utils.get_user_selected_feature_model()
+        data, feature, dbName = utils.get_user_selected_feature_model()
         k = utils.get_user_input_k()
         ls_option = utils.get_user_selected_dim_reduction()
 
         data = monogo_query.get_entire_collection(utils.feature_model[feature])
-
-        # V -Input matrix with all the even images
-        val = []
-        i = 0
-        for key in range(0,8677,2):
-            data[key]["imageID"] = i
-            val.append(data[key])
-            i += 1
-        data = val
 
         final_matrix = np.zeros((len(data),len(data)))
         for j in tqdm(range(len(data))):
@@ -35,7 +26,7 @@ class task6:
             query= np.array(data[j]["feature_descriptor"])
             for i in range(len(data)):
                 vec = np.array(data[i]["feature_descriptor"])
-                if feature in ["color_moment","hog","avgpool","layer3","fc_layer"]:
+                if  utils.feature_model[feature] in ["color_moment","hog","avgpool","layer3","fc_layer"]:
                     distances.append(ds.cosine_similarity(query.flatten(), vec.flatten()))
             final_matrix[j, : ] = distances
         print(final_matrix.shape)

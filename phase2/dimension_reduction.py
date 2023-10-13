@@ -82,7 +82,7 @@ def svd(data_matrix : np.ndarray, k=None, center=True ) -> np.ndarray :
         else  :
             raise ValueError("k is higher than the discovered latent features")
     # Temp Fix
-    U = U.real
+    # U = U.real
     return U,S,VT
 
 
