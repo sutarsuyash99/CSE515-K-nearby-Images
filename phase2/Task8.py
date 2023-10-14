@@ -35,11 +35,11 @@ class Task8:
         elif option == 2:
             feature_data = feature_data[1][2]
             _, label = self.dataset[imageID]
-            result = self.distance_function_for_images_labels(feature_data[int(label)], feature_data, k)
+            result = self.distance_function_for_labels(feature_data[int(label)], feature_data, k)
             
         else:
             _, label = self.dataset[imageID]
-            result = self.distance_function_for_images_labels(feature_data[int(label)], feature_data, k)
+            result = self.distance_function_for_labels(feature_data[int(label)], feature_data, k)
         
         print(result)
             
@@ -53,14 +53,13 @@ class Task8:
 
         # Get the entire dataset to find the closest even image
         db_data = mongo_query_np.get_all_feature_descriptor(utils.feature_model[5])
-        output = self.distance_function_for_images_images(input_image_vector, db_data, 1)
+        output = self.distance_function_for_images(input_image_vector, db_data, 1)
         closest_image_id = output[0][0]
         return closest_image_id
         
 
-
     def distance_function_labels_from_images(self, query_vector, data, k):
-        """Runs the distance function in loop gets you the K top labels"""
+        """Runs the distance function in loop gets you the K top labels from image-weight latent semantics"""
         distances = []
         for i in range(len(data)):
             distances.append(ds.cosine_similarity(query_vector.flatten(), data[i]))
@@ -81,8 +80,8 @@ class Task8:
 
         return result
     
-    def distance_function_for_images_labels(self, query_vector, data, k):
-        """Runs the distance function in loop gets you the K top images"""
+    def distance_function_for_labels(self, query_vector, data, k):
+        """Runs the distance function in loop gets you the K top labels from label-weight latent semantics"""
         distances = []
         for i in range(len(data)):
             distances.append(ds.cosine_similarity(query_vector.flatten(), data[i]))
@@ -97,7 +96,7 @@ class Task8:
 
         return output_list
 
-    def distance_function_for_images_images(self, query_vector, data, k):
+    def distance_function_for_images(self, query_vector, data, k):
         """Runs the distance function in loop gets you the K top images"""
         distances = []
         for i in range(len(data)):
