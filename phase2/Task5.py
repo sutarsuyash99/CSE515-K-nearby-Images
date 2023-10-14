@@ -21,12 +21,12 @@ class Task5:
 
         label_label_similarity_matrix = np.zeros((total_labels,total_labels))
 
+        distance_function_to_use = select_distance_function_for_model_space(option)
         for i in range(total_labels):
             for j in range(total_labels):
-                if option == 6:
-                    label_label_similarity_matrix[i][j] = distances.kl_divergence(labelled_feature_descriptor[i], labelled_feature_descriptor[j])
-                else:
-                    label_label_similarity_matrix[i][j] = distances.cosine_similarity(labelled_feature_descriptor[i], labelled_feature_descriptor[j])
+                label_label_similarity_matrix[i][j] = distance_function_to_use(
+                    labelled_feature_descriptor[i].flatten(), labelled_feature_descriptor[j].flatten()
+                )
         
         path =  str("./LatentSemantics/LS3/label_label_matrix/label_label_similarity_matrix_" + feature_model[option]) + ".pkl"
         torch.save(label_label_similarity_matrix, path)

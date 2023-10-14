@@ -20,6 +20,9 @@ class task6:
         data = monogo_query.get_entire_collection(utils.feature_model[feature])
 
         final_matrix = np.zeros((len(data),len(data)))
+
+        distance_function_to_use = utils.select_distance_function_for_model_space(feature)
+
         for j in tqdm(range(len(data))):
 
             distances = []
@@ -27,7 +30,7 @@ class task6:
             for i in range(len(data)):
                 vec = np.array(data[i]["feature_descriptor"])
                 if  utils.feature_model[feature] in ["color_moment","hog","avgpool","layer3","fc_layer"]:
-                    distances.append(ds.cosine_similarity(query.flatten(), vec.flatten()))
+                    distances.append(distance_function_to_use(query.flatten(), vec.flatten()))
             final_matrix[j, : ] = distances
         print(final_matrix.shape)
         

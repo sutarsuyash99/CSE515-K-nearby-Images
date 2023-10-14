@@ -11,8 +11,7 @@ from PIL import Image
 import numpy as np
 import pandas as pd
 import os
-from os import listdir
-from os.path import isfile, join
+import distances
 # from ordered_set import OrderedSet
 
 pd.set_option('display.max_rows', 30)
@@ -22,6 +21,15 @@ pd.set_option('display.precision', 2)
 
 
 from Mongo.mongo_query_np import get_all_feature_descriptor
+
+distance_function_per_feature_model = {
+    1: distances.euclidean_distance,
+    2: distances.cosine_distance,
+    3: distances.cosine_distance,
+    4: distances.cosine_distance,
+    5: distances.cosine_distance,
+    6: distances.kl_divergence
+}
 
 feature_model  = {
     1 : "color_moment",
@@ -38,6 +46,11 @@ latent_semantics = {
     3 : "LDA",
     4 : "K_means"
 }
+
+def select_distance_function_for_model_space(option: int):
+    if option in distance_function_per_feature_model:
+        return distance_function_per_feature_model[option]
+    return None
 
 def int_input(default_value: int = 99) -> int:
     try:
@@ -359,3 +372,46 @@ def convert_image_to_grayscale(image):
     cv2_image = np.array(gray_image)
 
     return cv2_image
+
+def compute_distance_query_image_top_k(
+        k: int,
+        labelled_feature_vectors: dict,
+        model_space: np.ndarray,
+        cur_label: str,
+        option: int,
+    ) -> list:
+        """
+        Function that computes top k images for label in given model space
+        Parameters:
+            k: integer
+            labelled_feature_vectors: (dict) (key: label name) -> value: label_feature vector
+            model_space: (list) which contains feature vectors for all images
+            cur_label: (str) label index name -- eg. 'Faces'
+            option: (int) internal map index -- see: feature_model
+        """
+        top_distances = []
+        cur_label_fv = labelled_feature_vectors[cur_label]
+
+        distance_function_to_use = select_distance_function_for_model_space(option)
+
+        for i in range(len(model_space)):
+            distance = distance_function_to_use(
+                cur_label_fv.flatten(),
+                model_space[i].flatten(),
+            )
+            top_distances.append((distance, i * 2))
+        top_distances.sort()
+
+        top_k = []
+        for i in range(k):
+            top_k.append((top_distances[i][1], top_distances[i][0]))
+
+        print("-" * 20)
+        for i in top_k:
+            print(f"ImageId: {i[0]}, Distance: {i[1]}")
+        print("-" * 20)
+        # list of tuple
+        # -------------
+        # 0: id
+        # 1: distance
+        return top_k

@@ -46,9 +46,11 @@ class Task2a:
 
         utils.display_image_og(img)
         
+        distance_function_to_use = utils.select_distance_function_for_model_space(feature_space_selected)
+
         distances = []
         for i in labelled_feature_vectors.keys():
-            cur_distance = cosine_distance( feature_vector_imageId.flatten(), labelled_feature_vectors[i].flatten() )
+            cur_distance = distance_function_to_use( feature_vector_imageId.flatten(), labelled_feature_vectors[i].flatten() )
             distances.append((cur_distance, i))
         distances.sort()
         
