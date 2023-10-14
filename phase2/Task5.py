@@ -28,6 +28,10 @@ class Task5:
                 else:
                     label_label_similarity_matrix[i][j] = distances.cosine_similarity(labelled_feature_descriptor[i], labelled_feature_descriptor[j])
         
+        path =  str("./LatentSemantics/LS4/label_label_similarity_matrix_" + feature_model[option]) + ".pkl"
+        torch.save(label_label_similarity_matrix, path)
+        print("Output file for label-label similarity matrix is saved with name - " + path)
+
         return label_label_similarity_matrix, option
         # print(labelled_feature_vectors.shape)
 
@@ -66,6 +70,3 @@ if __name__ == '__main__':
     task5.save_to_path(reduced_matrix, feature_option, dr_option, k)
     print_decreasing_weights(reduced_matrix, "Labels")
     print("Exiting Task5 .............")
-
-        
-    
