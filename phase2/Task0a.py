@@ -78,7 +78,7 @@ class Task0a():
         collection.delete_many({})
 
     # stores all the vectors to the database
-    def store_all_feature_vectors(self, Pickle_Flag = False):
+    def delete_all_records(self):
 
         self.empty_collections('color_moment')
         self.empty_collections('hog')
@@ -87,6 +87,7 @@ class Task0a():
         self.empty_collections('fc_layer')
         self.empty_collections('resnet_final')
 
+    def load_from_pickle_files(self):
         def onlyEvenData(data):
             # map = {
             #     "imageID": imageid,
@@ -97,54 +98,79 @@ class Task0a():
             for i in data:
                 if i['imageID'] % 2 == 0: reduced_data.append(i)
             return reduced_data
+        
+    
+        print("Starting loading form pickle files")
+        labelled_data = utils.get_image_categories()
+        # avgpool vectors
+        data = combine_data("avgpool_vectors.pkl", labelled_data)
+        upsert_data("avgpool", onlyEvenData(data))
+        # Color_moments_vectors.pkl
+        data = combine_data("Color_moments_vectors.pkl", labelled_data)
+        upsert_data("color_moment", onlyEvenData(data))
+        # fc_layer_vectors.pkl
+        data = combine_data("fc_layer_vectors.pkl", labelled_data)
+        upsert_data("fc_layer", onlyEvenData(data))
+        # HOG_vectors.pkl
+        data = combine_data("HOG_vectors.pkl", labelled_data)
+        upsert_data("hog", onlyEvenData(data))
+        # layer3_vectors.pkl
+        data = combine_data("layer3_vectors.pkl", labelled_data)
+        upsert_data("layer3", onlyEvenData(data))
+        # resnet_vectors.pkl
+        data = combine_data("resnet_vectors.pkl", labelled_data)
+        upsert_data("resnet_final", onlyEvenData(data))
+        
+        # Compute and load into database
+    def load_by_computing(self):
+            
+        total_image = len(self.dataset)
+        for i in tqdm(range(0, total_image, 2), desc= 'Running feature extraction on all models'):
+            image, _ = self.dataset[i]
+            
+            self.custom_feature_extraction(i, image)
 
-        if Pickle_Flag:
-            print("Starting loading form pickle files")
-            labelled_data = utils.get_image_categories()
-            # avgpool vectors
-            data = combine_data("avgpool_vectors.pkl", labelled_data)
-            upsert_data("avgpool", onlyEvenData(data))
-            # Color_moments_vectors.pkl
-            data = combine_data("Color_moments_vectors.pkl", labelled_data)
-            upsert_data("color_moment", onlyEvenData(data))
-            # fc_layer_vectors.pkl
-            data = combine_data("fc_layer_vectors.pkl", labelled_data)
-            upsert_data("fc_layer", onlyEvenData(data))
-            # HOG_vectors.pkl
-            data = combine_data("HOG_vectors.pkl", labelled_data)
-            upsert_data("hog", onlyEvenData(data))
-            # layer3_vectors.pkl
-            data = combine_data("layer3_vectors.pkl", labelled_data)
-            upsert_data("layer3", onlyEvenData(data))
-            # resnet_vectors.pkl
-            data = combine_data("resnet_vectors.pkl", labelled_data)
-            upsert_data("resnet_final", onlyEvenData(data))
-            
-        else:
-            
-            
-            total_image = len(self.dataset)
-            for i in tqdm(range(0, total_image, 2), desc= 'Running feature extraction on all models'):
-                image, _ = self.dataset[i]
-                
-                self.custom_feature_extraction(i, image)
-
-                map = self.add_to_map(self.feature_dict_color_moments[i], i)
-                self.add_to_database('color_moment', map)
-                map = self.add_to_map(self.features_dict_hog[i], i)
-                self.add_to_database('hog', map)
-                map = self.add_to_map(self.feature_dict_avgpool[i], i)
-                self.add_to_database('avgpool', map)
-                map = self.add_to_map(self.feature_dict_layer3[i], i)
-                self.add_to_database('layer3', map)
-                map = self.add_to_map(self.feature_dict_fc_layer[i], i)
-                self.add_to_database('fc_layer', map)
-                map = self.add_to_map(self.softmax[i], i)
-                self.add_to_database('resnet_final', map)
+            map = self.add_to_map(self.feature_dict_color_moments[i], i)
+            self.add_to_database('color_moment', map)
+            map = self.add_to_map(self.features_dict_hog[i], i)
+            self.add_to_database('hog', map)
+            map = self.add_to_map(self.feature_dict_avgpool[i], i)
+            self.add_to_database('avgpool', map)
+            map = self.add_to_map(self.feature_dict_layer3[i], i)
+            self.add_to_database('layer3', map)
+            map = self.add_to_map(self.feature_dict_fc_layer[i], i)
+            self.add_to_database('fc_layer', map)
+            map = self.add_to_map(self.softmax[i], i)
+            self.add_to_database('resnet_final', map)
 
             
         print("The image feature descriptors have been stored in Database")
 
 if __name__ == '__main__':
     task = Task0a()
-    task.store_all_feature_vectors(True)
+    print("*"*25 + " Task 0a "+ "*"*25)
+    print("This task will first delete all records from all the collections.\n Please enter '0' if you want to exit or any else value to continue\n")
+    d = int(input())
+
+    if d != 0:
+        task.delete_all_records()
+        print("Please enter the choice below:\n1 - Load from pickle files\n2 - Compute feature vectors and load\n ")
+        n = int(input())
+        if n != 2:
+            if n != 1:
+                print("Invalid choice. Going with default input")
+            
+            try:
+                task.load_from_pickle_files()
+            except Exception as e:
+                print("The pickle files could not be located: {e}")
+                task.load_by_computing()
+            
+        else: 
+            task.load_by_computing()
+
+        print("The image feature descriptors have been stored in Database")
+        
+    else:
+        print("Exiting task 0a.......")
+    
