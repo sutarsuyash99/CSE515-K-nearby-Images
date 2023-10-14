@@ -12,6 +12,10 @@ import numpy as np
 import pandas as pd
 import os
 import distances
+import glob
+import distances
+from tqdm import tqdm
+import Mongo.mongo_query_np as mongo_query
 # from ordered_set import OrderedSet
 
 pd.set_option('display.max_rows', 30)
@@ -420,3 +424,122 @@ def compute_distance_query_image_top_k(
         # 0: id
         # 1: distance
         return top_k
+        
+        
+ 
+
+
+
+ 
+def get_user_input_model_or_space():
+        """Helper function to be used in other function to take model or space"""
+        print('\n\nSelect : \
+          \n1. Feature model\
+          \n2. Latent space and feature model\n')
+          
+        option = int_input()
+        return option
+
+def get_saved_model_files(feature_model : str , latent_space : int =  None, d_reduction : str = None ):
+
+    """
+    Helper function which check for model files.
+    Returns:
+        pathname: relative path to pkl from phase root folder (None if no pkl exists)
+    """
+   
+
+    #Case 1 : Only feature_model no latent_semantics 
+    if latent_space == None :
+        pattern = f'image_image_{feature_model}*pkl'
+    #Case 2 : Latent semantics and feature_model
+    elif latent_space != None :
+        pattern = f'LS{latent_space}_{feature_model}_{d_reduction}*.pkl'
+        
+       
+    current_directory = os.getcwd()
+    
+    # Initialize a list to store matching file paths
+    matching_files = []
+
+    # Recursively search for files in successive directories
+    for root, dirs, files in os.walk(current_directory):
+        for file_path in glob.glob(os.path.join(root, pattern)):
+            matching_files.append(file_path)
+
+    
+    if len(matching_files) > 0 :
+        matching_file = matching_files[0]
+        print(matching_file)
+        return matching_file
+    else :
+        return None
+
+
+def get_user_selected_latent_space_feature_model():
+    """
+    Helper function to be used in other functions to take user input
+    Parameters: None
+    Returns: 
+        path: Path to model file
+        LS-option: option need
+    LS1, LS2, LS3, LS4
+    LS1: SVD, NNMF, k-means, LDA
+    LS2: CP-decompositions
+    LS3: Label-Label similarity -> reduced space
+    LS4: Image-Image similarity -> reduced space
+    """
+    print('\n\nSelect your Latent Space: \
+          \n1. LS1 --> SVD, NNMF, kMeans, LDA\
+          \n2. LS2 --> CP-decomposition\
+          \n3. LS3 --> Label-Label similarity\
+          \n4. LS4 --> Image-Image similarity\n')
+    ls_option = int_input(1)  
+     
+    #Get feature model for latent space 
+    _, fs_option, _ = get_user_selected_feature_model()
+    
+    #Get dimensionality reduction
+    dr_option = get_user_selected_dim_reduction()
+    
+    return ls_option, fs_option, dr_option
+
+  
+def generate_image_similarity_matrix_from_db(feature_model : str, fs_option : int) -> np.ndarray :
+    
+    data = mongo_query.get_all_feature_descriptor(feature_model)
+
+    N = data.shape[0]
+    distance_matrix = np.zeros((N, N))
+    distance_function_to_use = utils.select_distance_function_for_model_space(fs_option)
+    
+    #If feature space is color_moment or hog use cosine or use euclidean
+    for i in tqdm(range(N)):
+        for j in range(N):
+            
+                # Calculate the similarity using your similarity function
+                distance = distances.distance_function_to_use(data[i].flatten(), data[j].flatten())
+                distance_matrix[i,j] = distance
+
+            
+    return distance_matrix
+   
+    
+def generate_matrix_from_image_weight_pairs(data : np.ndarray , fs_option : int ) -> np.ndarray :
+    
+    '''
+    Generates image_image similarity matrix from image-weight pairs 
+    '''
+    N = data.shape[0]
+    distance_matrix = np.zeros((N, N))
+    
+    #If feature space is color_moment or hog use cosine or use euclidean
+    for i in tqdm(range(N)):
+        for j in range(N):
+            
+                # Calculate the similarity using your similarity function
+                distance = distances.distance_function_to_use(data[i].flatten(), data[j].flatten())
+                distance_matrix[i,j] = distance
+
+            
+    return distance_matrix
