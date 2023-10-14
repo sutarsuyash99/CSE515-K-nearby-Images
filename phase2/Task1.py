@@ -2,14 +2,13 @@ import utils
 from label_vectors import create_labelled_feature_vectors
 import distances
 
-
 class Task1:
     def __init__(self):
         self.dataset, self.labelled_images = utils.initialise_project()
 
     def query_image_top_k(self):
         print("=" * 25, "SUB-MENU", "=" * 25)
-        labelled_feature_vectors, _, _ = create_labelled_feature_vectors(
+        labelled_feature_vectors, model_space, _ = create_labelled_feature_vectors(
             self.labelled_images
         )
         k = utils.get_user_input_k()
@@ -19,25 +18,27 @@ class Task1:
         if cur_label not in labelled_feature_vectors:
             print("Improper Input label provided")
             return
-
+        
         top_distances = []
-        for key in labelled_feature_vectors.keys():
+        cur_label_fv = labelled_feature_vectors[cur_label]
+
+        for i in range(len(model_space)):
             distance = distances.cosine_distance(
-                labelled_feature_vectors[cur_label].flatten(),
-                labelled_feature_vectors[key].flatten(),
+                cur_label_fv.flatten(),
+                model_space[i].flatten(),
             )
-            top_distances.append((distance, key))
+            top_distances.append((distance, i * 2))
         top_distances.sort()
 
-        index_name_map = {}
-        for i in range(len(self.dataset.categories)):
-            index_name_map[self.dataset.categories[i]] = i
+        top_k = []
+        for i in range(k):
+            top_k.append((top_distances[i][1], top_distances[i][0]))
+        
+        print("-" * 20)
+        for i in top_k: print(f'ImageId: {i[0]}, Distance: {i[1]}')
+        print("-" * 20)
 
-        print("-" * 20)
-        for i in range(k + 1):
-            key = top_distances[i][1]
-            print(f"{key} ({index_name_map[key]}) -- {top_distances[i][0]}")
-        print("-" * 20)
+        utils.display_k_images_subplots(self.dataset, top_k, 'Closest to Label')
 
 
 if __name__ == "__main__":
