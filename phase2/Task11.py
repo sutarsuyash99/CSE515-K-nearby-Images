@@ -1,0 +1,161 @@
+import utils
+from label_vectors import create_labelled_feature_vectors
+import distances
+from Mongo.mongo_query_np import get_all_feature_descriptor
+import torch
+from ppagerank import pagerank
+
+class Task11:
+
+    def __init__(self):
+        self.dataset, self.labelled_images = utils.initialise_project()
+    
+        
+    def get_label(self) :
+    
+        #Get the label id 
+        label_index_selected = utils.get_user_input_label()
+        try :
+            label_selected = self.dataset.categories[label_index_selected]
+        except Exception :
+            print("label not in database -> try again")
+            return None, None
+            
+        print(f"Input provided: {label_index_selected} => {label_selected}")
+        return label_index_selected, label_selected
+        
+    def get_label_representatives(self, k : int, label_id : int, feature : str) -> list :
+        
+        #Place holder function gives the cloeset image id/ ids for the feature_model or latent_space_feature_model
+        #Get from the task1 or task10 
+        ###Temporary placeholder 
+        seeds = [0]
+        return seeds
+    
+    def pagerankcall(self, matrix, seeds : list, m : int, n : int, label):
+    
+        rankings = pagerank(matrix, seeds, m, n) 
+                    
+        #Covert ranking ids to even ids
+        even_rankings = [(image_id * 2, score) for image_id , score in rankings]
+                    
+        #Display rankings 
+        print(f'Pagerank score for label {label} : ')
+        print(even_rankings)
+        utils.display_k_images_subplots(
+            self.dataset, even_rankings, f"Top {m} images for {label}"
+        )
+    
+    def runTask11(self):
+    
+        print("=" * 25, "SUB-MENU", "=" * 25)
+        
+        #Get the feature space or latent space with feature space to operate
+        option = utils.get_user_input_model_or_space()
+        #Number of label represntatives to get
+        k = 1  
+
+        match option :
+            
+            case 1 : 
+            
+                '''
+                Case 1: Only operate in feature space 
+                '''
+                
+                #Get feature model 
+                print("\n")
+                print("*"*25 + " Feature Model "+ "*"*25)
+                print("Please select from below mentioned options")
+                data, feature, dbName = utils.get_user_selected_feature_model()
+                
+                feature_model = utils.feature_model[feature]
+                
+                
+                #check if the image-image similarity matrix exist if not ask user to run the task 6
+                file = utils.get_saved_model_files(feature_model=feature_model)
+                if file == None :
+                    print(f'No saved image-image similarity model for {feature_model}')
+                    print(f'Creating image image similarity score model on demand....')
+                    matrix = utils.generate_image_similarity_matrix_from_db(feature_model, feature)
+                else :
+                
+                    matrix = torch.load(file)
+                    print("Model loaded...\n")
+                    
+                    
+                #Get label id
+                while True :
+                    label_id, _ = self.get_label()
+                    if label_id != None :
+                        break
+                label = self.dataset.categories[label_id]
+                
+                #Get label representative in particular feature model
+                seeds = self.get_label_representatives(k, label_id, feature_model)
+                
+                print("\nEnter value for number of similar images to find - m : ")
+                m = utils.int_input()
+                
+                print("\nEnter value for n : ")
+                n = utils.int_input()
+                
+                self.pagerankcall(matrix, seeds, m, n, label)
+                    
+            case 2 : 
+                
+                '''
+                Case 2: Operate in latent space and feature model
+                '''
+                
+                #Get user selected latent space and corresponding feature space and dimensionality reduction 
+                print("\n")
+                print("*"*25 + " Latent Space "+ "*"*25)
+                print("Please select from below mentioned options")
+                
+                #latent space, feature space and dimensionality reduction/letant semantics 
+                ls_option, fs_option, dr_option = utils.get_user_selected_latent_space_feature_model()
+                d_reduction = utils.latent_semantics[dr_option]
+                
+                #feature_model name
+                feature_model = utils.feature_model[fs_option]
+                
+                #Check if model exists for that options 
+                #LS3 not implemented
+                if ls_option == 3 :
+                    print("Not implemented")
+                else :  
+                    file = utils.get_saved_model_files(feature_model=feature_model, latent_space=ls_option, d_reduction=d_reduction)
+                    if file == None :
+                        print(f'No saved model for LS{ls_option} - {feature_model} - {d_reduction}')
+                        print(f'Please run task 3-6 to generate model for LS{ls_option} - {feature_model} - {d_reduction}')
+                    else :
+                        f_name = file.split('\\')[-1]
+                        f_latents = ''.join(f_name.split('.')[0]).split('-')[-1]
+                        print(f"Factors file exist for the selected option - {f_latents} feature")
+                        file = torch.load(file)
+                        print("File loaded...\n")
+                        
+                        
+                        #check if image_image matrix file exits
+                        
+                        #if not then generate 
+                        print("Generating scores based on the weights....")
+                        matrix = utils.generate_matrix_from_image_weight_pairs(file, fs_option)
+                        print("Model loaded...\n")
+                        
+                        while True :
+                            label_id, _ = self.get_label()
+                            if label_id != None :
+                                break
+                        label = self.dataset.categories[label_id]
+                    
+                        #Get label representative in particular feature model
+                        seeds = self.get_label_representatives(k, label_id, feature_model)
+                        
+                        self.pagerankcall(matrix, seeds, m, n, label)
+                    
+
+if __name__ == "__main__":
+    task11 = Task11()
+    task11.runTask11()
