@@ -558,7 +558,7 @@ def generate_image_similarity_matrix_from_db(feature_model : str, fs_option : in
                 distance = distance_function_to_use(data[i].flatten(), data[j].flatten())
                 distance_matrix[i,j] = distance
     
-    torch.save(distance_matrix,f'image_image_{feature_model}.pkl')
+    torch.save(distance_matrix,f'./SimilarityMatrix/image_image_similarity_matrix_{feature_model}.pkl')
     return distance_matrix
     
     
@@ -582,15 +582,5 @@ def generate_matrix_from_image_weight_pairs(data : np.ndarray , fs_option : int 
     return distance_matrix
     
     
-    
-def generate_matrix_from_label_label_matrix(label_data : np.ndarray , fs_option : int, labelled_images : np.ndarray ) -> np.ndarray :    
-    
-    '''
-    Generates image_image similarity matrix from label_label similarity matrix 
-    '''
-    
-    print(labelled_images)
-    print(labelled_images[0])
-    
-    
+
     
