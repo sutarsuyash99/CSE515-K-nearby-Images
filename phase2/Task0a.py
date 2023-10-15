@@ -25,6 +25,33 @@ class Task0a():
         self.dataset, self.labelled_images = initialise_project()
         pass
 
+    def runTask0a(self):
+        print("*"*25 + " Task 0a "+ "*"*25)
+        print("This task will first delete all records from all the collections.\n Please enter '0' if you want to exit or any else value to continue\n")
+        d = int(input())
+
+        if d != 0:
+            self.delete_all_records()
+            print("Please enter the choice below:\n1 - Load from pickle files\n2 - Compute feature vectors and load\n ")
+            n = int(input())
+            if n != 2:
+                if n != 1:
+                    print("Invalid choice. Going with default input")
+                
+                try:
+                    self.load_from_pickle_files()
+                except Exception as e:
+                    print("The pickle files could not be located:")
+                    self.load_by_computing()
+                
+            else: 
+                self.load_by_computing()
+
+            print("The image feature descriptors have been stored in Database")
+        
+        else:
+            print("Exiting task 0a.......")
+
     def custom_feature_extraction(self, i, image):
 
         color_moments_feature = color.color_moments_fn(image)
@@ -148,29 +175,5 @@ class Task0a():
 
 if __name__ == '__main__':
     task = Task0a()
-    print("*"*25 + " Task 0a "+ "*"*25)
-    print("This task will first delete all records from all the collections.\n Please enter '0' if you want to exit or any else value to continue\n")
-    d = int(input())
-
-    if d != 0:
-        task.delete_all_records()
-        print("Please enter the choice below:\n1 - Load from pickle files\n2 - Compute feature vectors and load\n ")
-        n = int(input())
-        if n != 2:
-            if n != 1:
-                print("Invalid choice. Going with default input")
-            
-            try:
-                task.load_from_pickle_files()
-            except Exception as e:
-                print("The pickle files could not be located: {e}")
-                task.load_by_computing()
-            
-        else: 
-            task.load_by_computing()
-
-        print("The image feature descriptors have been stored in Database")
-        
-    else:
-        print("Exiting task 0a.......")
+    task.runTask0a()
     

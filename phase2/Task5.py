@@ -2,9 +2,18 @@ from utils import *
 from label_vectors import *
 import distances 
 import dimension_reduction as dr
-class Task5:
+class task5:
     def __init__(self) -> None:
         self.dataset, self.labelled_images = initialise_project()
+
+    def runTask5(self):
+        print("*"*25 + " Task 5 "+ "*"*25)
+        print("Please select from below mentioned options")
+        label_label_similarity_matrix, feature_option = self.label_label_similarity()
+        reduced_matrix, dr_option, k = self.label_dimensionality_reduction(label_label_similarity_matrix)
+        self.save_to_path(reduced_matrix, feature_option, dr_option, k)
+        print_decreasing_weights(reduced_matrix, "Labels")
+        print("Exiting Task5 .............")
 
     def label_label_similarity(self):
         '''Takes the input from user for feature model selection. 
@@ -62,11 +71,5 @@ class Task5:
         print("Output file is saved with name - " + path)
 
 if __name__ == '__main__':
-    task5 = Task5()
-    print("*"*25 + " Task 5 "+ "*"*25)
-    print("Please select from below mentioned options")
-    label_label_similarity_matrix, feature_option = task5.label_label_similarity()
-    reduced_matrix, dr_option, k = task5.label_dimensionality_reduction(label_label_similarity_matrix)
-    task5.save_to_path(reduced_matrix, feature_option, dr_option, k)
-    print_decreasing_weights(reduced_matrix, "Labels")
-    print("Exiting Task5 .............")
+    Task5 = task5()
+    Task5.runTask5()

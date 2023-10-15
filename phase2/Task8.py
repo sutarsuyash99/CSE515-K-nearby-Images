@@ -62,10 +62,10 @@ class Task8:
         """Runs the distance function in loop gets you the K top labels from image-weight latent semantics"""
         distances = []
         for i in range(len(data)):
-            distances.append(ds.cosine_similarity(query_vector.flatten(), data[i]))
+            distances.append(ds.cosine_distance(query_vector.flatten(), data[i]))
         indexed_list = list(enumerate(distances))
 
-        sorted_list = sorted(indexed_list, key=lambda x: x[1], reverse= True)
+        sorted_list = sorted(indexed_list, key=lambda x: x[1])
         output_list = set()
         result = []
         i = 0
@@ -84,14 +84,14 @@ class Task8:
         """Runs the distance function in loop gets you the K top labels from label-weight latent semantics"""
         distances = []
         for i in range(len(data)):
-            distances.append(ds.cosine_similarity(query_vector.flatten(), data[i]))
+            distances.append(ds.cosine_distance(query_vector.flatten(), data[i]))
         indexed_list = list(enumerate(distances))
 
         # Sorting the the list 
         sorted_list = sorted(indexed_list, key=lambda x: x[1])
 
-        output_list = sorted_list[- (k+1):].copy()
-        output_list.reverse()
+        output_list = sorted_list[:(k+1)].copy()
+        # output_list.reverse()
         output_list = [(utils.name_for_label_index(self.dataset, x), y) for x, y in output_list]
 
         return output_list
