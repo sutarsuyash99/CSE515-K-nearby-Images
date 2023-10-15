@@ -188,7 +188,6 @@ def display_k_images_subplots(dataset: datasets.Caltech101, distances: tuple, ti
                     axs[i,j].axis('off')
                     # ii += 1
                 else:
-                    print(ii)
                     id, distance = distances[ii][0], distances[ii][1]
                     img, _ = dataset[id]
                     if(img.mode == 'L'): axs[i,j].imshow(img, cmap = 'gray')
