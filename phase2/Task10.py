@@ -66,24 +66,27 @@ class Task10:
             case 1:
                 # get closest image for each option
                 closest_image_id = self.get_closet_image(cur_label_fv)
+                print(f"moving to fc layer --> {closest_image_id * 2}")
                 print(
                     f"label range: {self.labelled_images[label_selected][0]} - {self.labelled_images[label_selected][-1]}"
                 )
                 # LS1 - compare cur_label_fv with latent_model_space
                 # use latent_model_space
                 # get top k images
-                print(closest_image_id)
                 closest_image_vector = latent_model_space[closest_image_id // 2]
+                print(f"Moving to latent space {option} retrieving top {k} images")
                 top_k_distances = self.compute_closet_distance(
                     closest_image_vector, latent_model_space, k
                 )
             case 2:
                 # get closest image for each option
                 closest_image_id = self.get_closet_image(cur_label_fv)
+                print(f"moving to fc layer --> {closest_image_id * 2}")
                 print(
                     f"label range: {self.labelled_images[label_selected][0]} - {self.labelled_images[label_selected][-1]}"
                 )
                 print(closest_image_id)
+                print(f"Moving to latent space {option} retrieving top {k} images ... image weights distribution")
                 latent_model_space = latent_model_space[1][0]
                 closest_image_vector = latent_model_space[closest_image_vector // 2]
                 top_k_distances = self.compute_closet_distance(
@@ -92,10 +95,12 @@ class Task10:
             case 4:
                 # get closest image for each option
                 closest_image_id = self.get_closet_image(cur_label_fv)
+                print(f"moving to fc layer --> {closest_image_id * 2}")
                 print(
                     f"label range: {self.labelled_images[label_selected][0]} - {self.labelled_images[label_selected][-1]}"
                 )
                 print(closest_image_id)
+                print(f"Moving to latent space {option} retrieving top {k} images")
                 closest_image_vector = latent_model_space[closest_image_id // 2]
                 top_k_distances = self.compute_closet_distance(
                     closest_image_vector, latent_model_space, k
@@ -103,32 +108,38 @@ class Task10:
             case 3:
                 # get closest label for latent space
                 # loop over entire db and get top k images
-                closest_label_index_for_selected_label = (
-                    self.compute_closet_distance(
-                        latent_model_space[label_index_selected], latent_model_space, 2
-                    )
-                )[1][0]
-                closest_label_for_selected_label = self.dataset.categories[
-                    closest_label_index_for_selected_label
-                ]
-                print(
-                    f"Considering closest label {closest_label_index_for_selected_label} -- {closest_label_for_selected_label}"
-                )
-                print(
-                    f"label range: {self.labelled_images[closest_label_for_selected_label][0]} - {self.labelled_images[closest_label_for_selected_label][-1]}"
+                closest_label_index_for_selected_label = self.compute_closet_distance(
+                    latent_model_space[label_index_selected], latent_model_space, k
                 )
 
+                print("-" * 25)
+                print("Found top k label")
+                for i in closest_label_index_for_selected_label: print(i)
+                print("-" * 25)
+
+                # going in FC layer
+                print("Found k labels now going in FC layer")
                 collection_name_in_consideration = utils.feature_model[5]
-                cur_ls_model = label_vectors.label_fv_kmediods(
-                    closest_label_for_selected_label, collection_name_in_consideration
-                )
-
+                top_k_distances = []
                 all_features = mongo_query_np.get_all_feature_descriptor(
                     collection_name_in_consideration
                 )
-                top_k_distances = self.compute_closet_distance(
-                    cur_ls_model, all_features, k
-                )
+
+                for i in closest_label_index_for_selected_label:
+                    cur_label = self.dataset.categories[i[0]]
+                    cur_ls_model = label_vectors.label_fv_kmediods(
+                        cur_label, collection_name_in_consideration
+                    )
+
+                    # find 1 closest image
+                    top_k_distances_1 = self.compute_closet_distance(
+                        cur_ls_model, all_features, 1
+                    )[0]
+                    print(
+                        f"For label {cur_label} found closest image: {top_k_distances_1[0] * 2} with distance: {top_k_distances_1[1]}"
+                    )
+                    top_k_distances.append(top_k_distances_1)
+                print('-'*25)
             case default:
                 print("yeh toh bada toi hai!!")
 
