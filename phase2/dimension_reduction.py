@@ -12,7 +12,7 @@ from normalisation import *
 from utils import convert_higher_dims_to_2d
 import tensorly as tl
 
-def svd(D, k):
+def svd(D, k, center = True):
 
     D = convert_higher_dims_to_2d(D)
 
