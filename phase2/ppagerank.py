@@ -78,7 +78,7 @@ def power_iteration_rank(A: np.ndarray, R : np.ndarray) -> np.ndarray :
     
     
 
-def pagerank(similarity_matrix : np.ndarray, label_representatives : list, m : int, n : int, method='power') -> list :
+def pagerank(distance_matrix : np.ndarray, label_representatives : list, m : int, n : int, method='power') -> list :
     
     '''
     Pending : 1.What should be label representatives 
@@ -101,16 +101,20 @@ def pagerank(similarity_matrix : np.ndarray, label_representatives : list, m : i
     '''
               
     #Validating input 
-    if not isinstance(similarity_matrix, np.ndarray) :
+    if not isinstance(distance_matrix, np.ndarray) :
         raise ValueError("Matix should be a 2D square numpy array")
-    elif similarity_matrix.ndim != 2 :
+    elif distance_matrix.ndim != 2 :
         raise ValueError("Matrix should be a 2D square numpy array")
     elif not isinstance(label_representatives, list) :
         raise ValueError("Label representatives should be list of image id/ids")
     elif not isinstance(m, int) or not isinstance(n, int) :
         raise ValueError("Number of Images - m and Number of edges - n should be integers")
-        
-              
+    
+
+    #The matrix saved in task 6 saves distances
+    similarity_matrix = np.ones(distance_matrix.shape)
+    similarity_matrix = similarity_matrix - distance_matrix
+    
     #Damping factor : Probability for random walk and random jump
     #B -> Probability of random walk , (1-B) -> Probability of random jump or Seed Jump
     #By convention between 0.8 and 0.9 
