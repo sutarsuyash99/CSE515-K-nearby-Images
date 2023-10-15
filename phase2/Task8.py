@@ -14,7 +14,7 @@ class Task8:
         self.dataset, self.labelled_images = utils.initialise_project()
 
     def runTask8(self) -> None:
-        print("*"*25 + " Task 6 "+ "*"*25)
+        print("*"*25 + " Task 8 "+ "*"*25)
         imageID, img = utils.get_user_input_internalexternal_image()
         pathname, option = utils.get_user_input_latent_semantics()
         k = utils.get_user_input_k()
