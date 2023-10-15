@@ -37,6 +37,11 @@ class Task2b:
             resnet = resnet_features()
             resnet.run_model(img)
             feature_vector_imageId = resnet.apply_softmax()
+        else: 
+            img, _ = self.dataset[imageId]
+
+        #displaying user requested image
+        utils.display_image_og(img)
 
         distances = []
         for i in labelled_feature_vectors.keys():
