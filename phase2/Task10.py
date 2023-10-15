@@ -86,7 +86,9 @@ class Task10:
                     f"label range: {self.labelled_images[label_selected][0]} - {self.labelled_images[label_selected][-1]}"
                 )
                 print(closest_image_id)
-                print(f"Moving to latent space {option} retrieving top {k} images ... image weights distribution")
+                print(
+                    f"Moving to latent space {option} retrieving top {k} images ... image weights distribution"
+                )
                 latent_model_space = latent_model_space[1][0]
                 closest_image_vector = latent_model_space[closest_image_vector // 2]
                 top_k_distances = self.compute_closet_distance(
@@ -114,7 +116,8 @@ class Task10:
 
                 print("-" * 25)
                 print("Found top k label")
-                for i in closest_label_index_for_selected_label: print(i)
+                for i in closest_label_index_for_selected_label:
+                    print(i)
                 print("-" * 25)
 
                 # going in FC layer
@@ -139,15 +142,14 @@ class Task10:
                         f"For label {cur_label} found closest image: {top_k_distances_1[0] * 2} with distance: {top_k_distances_1[1]}"
                     )
                     top_k_distances.append(top_k_distances_1)
-                print('-'*25)
+                print("-" * 25)
             case default:
                 print("yeh toh bada toi hai!!")
 
         top_k_distances = [(id * 2, distance) for id, distance in top_k_distances]
         print(top_k_distances)
-        utils.display_k_images_subplots(
-            self.dataset, top_k_distances, "Top k images for label"
-        )
+        title = f"Top k images for label under LS{option}"
+        utils.display_k_images_subplots(self.dataset, top_k_distances, title)
 
 
 if __name__ == "__main__":
