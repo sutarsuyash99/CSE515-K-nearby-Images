@@ -9,7 +9,7 @@ import torch
 import dimension_reduction
 from sklearn.metrics.pairwise import cosine_similarity
 from Mongo.mongo_query_np import get_all_feature_descriptor_for_label, get_all_feature_descriptor
-
+import distances as ds
 class task9:
     def __init__(self) -> None:
         self.labels = utils.get_labels()
@@ -45,39 +45,41 @@ class task9:
         return path, detected_feature_space
 
     def find_closest_labels_with_label_reference(self, latent_semantics, semantic_vector, k):
-        similarities = cosine_similarity(latent_semantics, [semantic_vector])
-        distances = 1 - similarities
-
-        sorted_indices = np.argsort(distances, axis=0).flatten()
-        unique_elements = []
-        for i in range (0, len(sorted_indices)):
-            unique_elements.append((self.labels[i], similarities[i]))
-            if len(unique_elements) == k+1:
-                    break
-        print(unique_elements)
+        distances = []
+        for i in range(len(latent_semantics)):
+            distances.append(ds.cosine_similarity(semantic_vector.flatten(), latent_semantics[i]))
+        indexed_list = list(enumerate(distances))
+        sorted_list = sorted(indexed_list, key=lambda x: x[1])
+        output_list = sorted_list[- (k+1):].copy()
+        output_list.reverse()
+        
+        for i in range(0, len(output_list)):
+            print(f"label = {self.labels[output_list[i][0]]}, similarity_score = {output_list[i][1]}")
         return
 
     def find_closest_labels_with_image_reference(self, latent_semantics, semantic_vector, k):
-        similarities = cosine_similarity(latent_semantics, [semantic_vector])
-        distances = 1 - similarities
+        distances = []
+        for i in range(len(latent_semantics)):
+            distances.append(ds.cosine_similarity(semantic_vector.flatten(), latent_semantics[i]))
+        indexed_list = list(enumerate(distances))
+        sorted_list = sorted(indexed_list, key=lambda x: x[1], reverse=True)
 
-        sorted_indices = np.argsort(distances, axis=0).flatten()
+        # print(sorted_list)
         labels_of_each_indices = []
-        for i in sorted_indices:
-            label = self.image_labels[i*2]
+        for i in range(0, len(sorted_list)):
+            label = self.image_labels[sorted_list[i][0]*2]
             labels_of_each_indices.append(label)
-
         seen = set()
-        unique_elements = []
+        count_unique_labels = 0
         for i in range(0, len(labels_of_each_indices)):
-            item = labels_of_each_indices[i]
-            score = similarities[i][0]
-            if item not in seen:
-                unique_elements.append((item, score))
-                seen.add(item)
-                if len(unique_elements) == k+1:
+            label = labels_of_each_indices[i]
+            score = sorted_list[i][1]
+            if label not in seen:
+                count_unique_labels += 1
+                seen.add(label)
+                print(f"label = {label}, similarity_score = {score}") 
+                if count_unique_labels == k+1:
                     break
-        print(unique_elements)
         return
 
     def LS1(self, selected_label, path, k):
@@ -131,7 +133,7 @@ class task9:
         closest_image = label_vectors.label_image_distance_using_cosine(len(model_space), cur_label_fv, model_space, 1)
         closest_image_id = closest_image[0][0]
 
-        latent_semantics = torch.load(path+"/"+selected_latent_semantic)
+        latent_semantics = torch.load(path)
         semantic_vector = latent_semantics[closest_image_id]
 
         self.find_closest_labels_with_image_reference(latent_semantics, semantic_vector, k)
