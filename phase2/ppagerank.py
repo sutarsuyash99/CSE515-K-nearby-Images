@@ -109,8 +109,9 @@ def pagerank(distance_matrix : np.ndarray, label_representatives : list, m : int
         raise ValueError("Label representatives should be list of image id/ids")
     elif not isinstance(m, int) or not isinstance(n, int) :
         raise ValueError("Number of Images - m and Number of edges - n should be integers")
-    
-
+    elif m > len(distance_matrix) :
+        raise ValueError("Number of images - m asked is more than images in graph")
+        
     #The matrix saved in task 6 saves distances
     similarity_matrix = np.ones(distance_matrix.shape)
     similarity_matrix = similarity_matrix - distance_matrix
@@ -170,8 +171,7 @@ def pagerank(distance_matrix : np.ndarray, label_representatives : list, m : int
     if method == 'power' :
         R = power_iteration_rank(A, R)
         
-    
-    
+
     #Sort and return the ids and scores :
     top_m_ids = np.argsort(R)[::-1][:m]
     top_m_scores = R[top_m_ids]

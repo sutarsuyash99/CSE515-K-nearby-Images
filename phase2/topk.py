@@ -152,26 +152,33 @@ def query_label_image_top_k_ls(k : int, feature_space_name : str, fs_id : int, l
                 closest_image_vector, latent_model_space, k
             )
         case 3:
+            
             # get closest label for latent space
             # loop over entire db and get top k images
+            '''
             closest_label_index_for_selected_label = compute_closet_distance(
                 latent_model_space[label_index_selected], latent_model_space, k
             )
-
+            '''
+            closest_label_index_for_selected_label = [label_id]
+            
+            '''
             print("-" * 25)
             print("Found top k label")
             for i in closest_label_index_for_selected_label:
                 print(i)
             print("-" * 25)
-
+            
             # going in FC layer
             print("Found k labels now going in FC layer")
+            '''
             collection_name_in_consideration = utils.feature_model[5]
             top_k_distances = []
             all_features = mongo_query.get_all_feature_descriptor(
                 collection_name_in_consideration
             )
-
+            
+            
             for i in closest_label_index_for_selected_label:
                 cur_label = label_name
                 cur_ls_model = label_fd_function_to_use(
@@ -191,6 +198,8 @@ def query_label_image_top_k_ls(k : int, feature_space_name : str, fs_id : int, l
             print("yeh toh bada toi hai!!")
 
     top_k_distances = [(id * 2, distance) for id, distance in top_k_distances]
+    
+  
     print(top_k_distances)
         
     #While printing diplay even but send normal 

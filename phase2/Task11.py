@@ -15,7 +15,11 @@ class Task11:
 
 
     def get_label(self) :
-    
+        
+        '''
+        Get label name 
+        '''
+        
         #Get the label id 
         label_index_selected = utils.get_user_input_label()
         try :
@@ -27,7 +31,12 @@ class Task11:
         print(f"Input provided: {label_index_selected} => {label_selected}")
         return label_index_selected, label_selected
         
+        
     def get_label_representatives(self, feature_model : str , feature : int, label_name :str,label_id : int, latent_space : int = None, latent_semantic : str = None, labelled_images : dict = None ) -> list :
+        
+        '''
+        Genereate seeds
+        '''
         
         # For a feature space or latent space and feature space get label representatives
         # 2 cases 
@@ -49,21 +58,42 @@ class Task11:
             seeds = query_label_image_top_k_ls(k, feature_model, feature, label_name, label_id, latent_space, latent_semantic, labelled_images)
         print('###################: ')    
         return seeds
+    
+    
+    
+    def pagerankcall(self, matrix, seeds : list, m : int, n : int, label : str ) -> list :
+    
+        '''
+        Generate pagerank
+        '''
         
-    
-    def pagerankcall(self, matrix, seeds : list, m : int, n : int, label : str):
-    
         rankings = pagerank(matrix, seeds, m, n) 
-                    
+        print('HERE')
+        return rankings
+    
+    
+    def display_ranks(self, rankings : list, m : int, label : str ) -> None :
+        
+        '''
+        Displays ranks 
+        '''
+        
         #Covert ranking ids to even ids
         even_rankings = [(image_id * 2, score) for image_id , score in rankings]
-                    
+        
         #Display rankings 
         print(f'Pagerank score for label {label} : ')
-        print(even_rankings)
+        
+        rank = 1
+        print(f'Rank  ID  Score')
+        for item in even_rankings:
+            print(f" {rank}   {item[0]}   {item[1]}")
+            rank += 1
+        
         utils.display_k_images_subplots(
             self.dataset, even_rankings, f"Top {m} images for {label}"
         )
+    
     
     def runTask11(self):
     
@@ -97,7 +127,9 @@ class Task11:
                     print(f'Creating image image similarity score model on demand....')
                     matrix = utils.generate_image_similarity_matrix_from_db(feature_model, feature)
                 else :
-                
+                    
+                    f_name = file.split('\\')[-1]
+                    print(f"Model exist for the selected option - {f_name} feature")
                     matrix = torch.load(file)
                     print("Model loaded...\n")
                     
@@ -118,8 +150,8 @@ class Task11:
                 print("\nEnter value for n : ")
                 n = utils.int_input()
                 
-                self.pagerankcall(matrix, seeds, m, n, label_name)
-            
+                rankings = self.pagerankcall(matrix, seeds, m, n, label_name)
+                self.display_ranks(rankings, m, label_name)
             
             case 2 : 
                 
@@ -161,18 +193,11 @@ class Task11:
 
                     print("File loaded...\n")
                     
-                    #Special case for LS5  : label_label matrix 
-                    if ls_option == 3 :
-                            
-                        print("Generating image_image similarity matrix by mapping the label-label matrix.....")
-                        matrix = utils.generate_matrix_from_label_label_matrix(file, fs_option, self.labelled_images)
-                        
-                    else :    
-                        #check if image_image matrix file exits
-                        #if not then generate 
-                        print("Generating scores based on the weights....")
-                        matrix = utils.generate_matrix_from_image_weight_pairs(file, fs_option)
-                        print("Model loaded...\n")
+                    #check if image_image matrix file exits
+                    #if not then generate 
+                    print("Generating scores based on the weights....")
+                    matrix = utils.generate_matrix_from_image_weight_pairs(file, fs_option)
+                    print("Model loaded...\n")
                     
                     while True :
                         label_id, _ = self.get_label()
@@ -181,16 +206,45 @@ class Task11:
                     label_name = self.dataset.categories[label_id]
                 
                     #Get label representative in particular feature model
-                    seeds = self.get_label_representatives( feature_model, fs_option, label_name, label_id, ls_option, d_reduction, self.labelled_images )
+                    #Special case for LS3  : label_label matrix - take id of the given label
+                    if ls_option == 3 :
+                        seeds = [label_id]
+                    else :        
+                        seeds = self.get_label_representatives( feature_model, fs_option, label_name, label_id, ls_option, d_reduction, self.labelled_images )
+                    
+                    
                     
                     print("\nEnter value for number of similar images to find - m : ")
                     m = utils.int_input()
                 
                     print("\nEnter value for n : ")
                     n = utils.int_input()
+                  
                     
-                    self.pagerankcall(matrix, seeds, m, n, label_name)
-                
+                    rankings = self.pagerankcall(matrix, seeds, m, n, label_name)
+                    
+                    
+                    #LS3 - Special case : Get image for label 
+                    #Will get images associated with the labels associated with the given label  
+                    if ls_option == 3:
+                        image_rankings = [ ]
+                        print('Getting images associated with labels....')
+                        print('LS3 - Similiar images from different labels...')
+                        for label_rank_id, score in rankings :
+                           
+                           print(f"label_rank_id : {label_rank_id}")
+                           
+                           label_rank_name = self.dataset.categories[label_rank_id]
+                           image_id = query_label_image_top_k_ls(1,feature_model, fs_option, label_rank_name, label_rank_id, ls_option, d_reduction, self.labelled_images )[0]
+                           image_rankings.append((image_id,score))
+                    
+                        #Ranking for all cases 
+                        rankings =  image_rankings  
+                    
+                    
+                    self.display_ranks(rankings, m, label_name)
+
+
 
 if __name__ == "__main__":
     task11 = Task11()
