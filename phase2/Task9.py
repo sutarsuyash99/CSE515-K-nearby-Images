@@ -47,22 +47,22 @@ class task9:
     def find_closest_labels_with_label_reference(self, latent_semantics, semantic_vector, k):
         distances = []
         for i in range(len(latent_semantics)):
-            distances.append(ds.cosine_similarity(semantic_vector.flatten(), latent_semantics[i]))
+            distances.append(ds.cosine_distance(semantic_vector.flatten(), latent_semantics[i]))
         indexed_list = list(enumerate(distances))
         sorted_list = sorted(indexed_list, key=lambda x: x[1])
-        output_list = sorted_list[- (k+1):].copy()
-        output_list.reverse()
+        output_list = sorted_list[:(k+1)].copy()
+        # output_list.reverse()
         
         for i in range(0, len(output_list)):
-            print(f"label = {self.labels[output_list[i][0]]}, similarity_score = {output_list[i][1]}")
+            print(f"label = {self.labels[output_list[i][0]]}, similarity_score = {1 - output_list[i][1]}")
         return
 
     def find_closest_labels_with_image_reference(self, latent_semantics, semantic_vector, k):
         distances = []
         for i in range(len(latent_semantics)):
-            distances.append(ds.cosine_similarity(semantic_vector.flatten(), latent_semantics[i]))
+            distances.append(ds.cosine_distance(semantic_vector.flatten(), latent_semantics[i]))
         indexed_list = list(enumerate(distances))
-        sorted_list = sorted(indexed_list, key=lambda x: x[1], reverse=True)
+        sorted_list = sorted(indexed_list, key=lambda x: x[1])
 
         # print(sorted_list)
         labels_of_each_indices = []
@@ -73,7 +73,7 @@ class task9:
         count_unique_labels = 0
         for i in range(0, len(labels_of_each_indices)):
             label = labels_of_each_indices[i]
-            score = sorted_list[i][1]
+            score = 1 - sorted_list[i][1]
             if label not in seen:
                 count_unique_labels += 1
                 seen.add(label)
