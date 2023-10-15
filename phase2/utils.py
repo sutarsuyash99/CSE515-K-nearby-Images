@@ -17,6 +17,7 @@ import distances
 from tqdm import tqdm
 import Mongo.mongo_query_np as mongo_query
 
+
 # from ordered_set import OrderedSet
 
 pd.set_option('display.max_rows', 30)
@@ -53,6 +54,11 @@ latent_semantics = {
 }
 
 def select_distance_function_for_model_space(option: int):
+    """
+    Takes the feature space as input gives function which is best suited to calculate the distance
+    Input  - feature_model key (see above)
+    Output - Suitable distance function for the given feature space/model
+    """
     if option in distance_function_per_feature_model:
         return distance_function_per_feature_model[option]
     return None
@@ -102,6 +108,11 @@ def get_labels():
     return dataset_named_categories
 
 def initialise_project():
+    """
+    Creates dataset and then creates labblled_images dictionary containing(label: string, list<imageIds: int>)
+    Input : None
+    Output : dataset, labelled_images(dict - (label: string, list<imageIds: int>))
+    """
     dataset = torchvision.datasets.Caltech101(root='./data', download=True, target_type='category')
 
     # this is going to be created once and passed throughout in all functions needed
@@ -142,13 +153,23 @@ def gen_unique_number_from_title(string: str) -> int:
         a+=ord(c)
     return a
 
-def display_k_images_subplots(dataset: datasets.Caltech101, distances: tuple, title: str):
+def display_k_images_subplots(dataset: datasets.Caltech101, distances: tuple, title: str, pil_image = None):
+    """
+    This function display the images which is passed in disantances tuple and external or odd image given in pil_image
+    Input : dataset , distance - tuple(imageid, distance), title - plot title, pil_image = Odd or External image
+    Output : None (Diplays images using pyplot)
+    """
     pyplot.close()
     k = len(distances)
+    if pil_image is not None:
+        pil_k = k + 1
+    else:
+        pil_k = k
     # print(len(distances))
     # distances tuple 0 -> id, 1 -> distance
-    split_x = find_nearest_square(k)
-    split_y = math.ceil(k/split_x)
+    split_x = find_nearest_square(pil_k)
+    split_y = math.ceil(pil_k/split_x)
+    
     # print(split_x, split_y)
     # this does not work
     # pyplot.figure(gen_unique_number_from_title(title))
@@ -159,13 +180,21 @@ def display_k_images_subplots(dataset: datasets.Caltech101, distances: tuple, ti
         for j in range(split_y):
             if(ii < k):
                 # print(ii)
-                id, distance = distances[ii][0], distances[ii][1]
-                img, _ = dataset[id]
-                if(img.mode == 'L'): axs[i,j].imshow(img, cmap = 'gray')
-                else: axs[i,j].imshow(img)
-                axs[i,j].set_title(f"Image Id: {id} Distance: {distance:.2f}")
-                axs[i,j].axis('off')
-                ii += 1
+                if i == 0 and j == 0 and pil_image is not None:
+                    img = pil_image
+                    if(img.mode == 'L'): axs[i,j].imshow(img, cmap = 'gray')
+                    else: axs[i,j].imshow(img)
+                    axs[i,j].set_title(f"Query Image", fontsize = 12)
+                    axs[i,j].axis('off')
+                    # ii += 1
+                else:
+                    id, distance = distances[ii][0], distances[ii][1]
+                    img, _ = dataset[id]
+                    if(img.mode == 'L'): axs[i,j].imshow(img, cmap = 'gray')
+                    else: axs[i,j].imshow(img)
+                    axs[i,j].set_title(f"Image Id: {id} Distance: {distance:.2f}", fontsize = 10)
+                    axs[i,j].axis('off')
+                    ii += 1
             else:
                 fig.delaxes(axs[i,j])
     # pyplot.title(title)
@@ -329,6 +358,12 @@ def get_user_selected_dim_reduction():
     return option
 
 def print_decreasing_weights(data, object = "ImageID"):
+    """
+    Converts Nd array into pandas dataframe and prints it in decreasing order
+    Input - data : Label/weight pairs
+            object : either ImageID or Label
+    Output - None (Prints data in decreasing order)
+    """
     dataset = torchvision.datasets.Caltech101(root='./data', download=True, target_type='category')
     m, n = data.shape
     df = pd.DataFrame()
@@ -450,7 +485,7 @@ def get_saved_model_files(feature_model : str , latent_space : int =  None, d_re
 
     #Case 1 : Only feature_model no latent_semantics 
     if latent_space == None :
-        pattern = f'image_image_{feature_model}*pkl'
+        pattern = f'image_image_similarity_matrix_{feature_model}*.pkl'
     #Case 2 : Latent semantics and feature_model
     elif latent_space != None :
         pattern = f'LS{latent_space}_{feature_model}_{d_reduction}*.pkl'
