@@ -17,26 +17,27 @@ class task6:
         k = utils.get_user_input_k()
         ls_option = utils.get_user_selected_dim_reduction()
 
-        data = monogo_query.get_entire_collection(utils.feature_model[feature])
+        # Using the data provided by the utils function get_user_selected_feature_model
+        # data = monogo_query.get_entire_collection(utils.feature_model[feature])
+        
 
         final_matrix = np.zeros((len(data),len(data)))
 
+        # Gets the appropriet distance function that will be used for the feature model selected
         distance_function_to_use = utils.select_distance_function_for_model_space(feature)
 
+        # Generate image image similarity matrix
+        print("\nGenerating Image - Image similarity matrix under the given feature space - \n")
         for j in tqdm(range(len(data))):
-
-            distances = []
-            query= np.array(data[j]["feature_descriptor"])
             for i in range(len(data)):
-                vec = np.array(data[i]["feature_descriptor"])
-                if  utils.feature_model[feature] in ["color_moment","hog","avgpool","layer3","fc_layer"]:
-                    distances.append(distance_function_to_use(query.flatten(), vec.flatten()))
-            final_matrix[j, : ] = distances
+                distances = distance_function_to_use(data[j].flatten(), data[i].flatten())
+                final_matrix[j, i ] = distances
+            
         print(final_matrix.shape)
         
-        path =  str("./LatentSemantics/LS4/image_image_" + utils.feature_model[feature]) + "_" + str(utils.latent_semantics[ls_option]) + "_" + str(k) + ".pkl"
+        path =  str("./LatentSemantics/LS4/image_image_matrix/image_image_similarity_matrix_" + utils.feature_model[feature]) + ".pkl"
         torch.save(final_matrix, path)
-        print("Output file is saved with name - " + path)
+        print("\n Similarity Matrix output file is saved at - " + path+ "\n")
 
         V = final_matrix
         # W is matrix with M x K dimension matrix with latent semantics
@@ -49,12 +50,12 @@ class task6:
         
         path =  str("./LatentSemantics/LS4/LS4_" + utils.feature_model[feature]) + "_" + str(utils.latent_semantics[ls_option]) + "_" + str(k) + ".pkl"
         torch.save(W, path)
-        print("Output file is saved with name - " + path)
+        print("\nLatent Semantics output file is saved at - " + path)
         data = W
 
         # Printing the ImageID weight pairs in decreasing order
         utils.print_decreasing_weights(data, "ImageID")
-        print("Exiting Task6 .............")
+        print("\n ............. Exiting Task6 ............. \n")
 
 if __name__ == "__main__":
     temp = task6()
