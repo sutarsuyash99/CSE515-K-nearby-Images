@@ -455,7 +455,7 @@ def get_saved_model_files(feature_model : str , latent_space : int =  None, d_re
     #Case 2 : CP-decomposition
     elif latent_space == 2 :
         pattern = f'LS{latent_space}_{feature_model}*.pkl'
-    #Case 2 : Latent semantics and feature_model
+    #Case 3 : Latent semantics and feature_model
     elif latent_space != None :
         pattern = f'LS{latent_space}_{feature_model}_{d_reduction}*.pkl'
         
