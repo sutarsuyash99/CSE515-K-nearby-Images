@@ -15,7 +15,8 @@ import distances
 import glob
 import distances
 from tqdm import tqdm
-import Mongo.mongo_query_np as mongo_query
+
+
 # from ordered_set import OrderedSet
 
 pd.set_option('display.max_rows', 30)
@@ -404,7 +405,7 @@ def compute_distance_query_image_top_k(
         cur_label_fv = labelled_feature_vectors[cur_label]
 
         distance_function_to_use = select_distance_function_for_model_space(option)
-
+        
         for i in range(len(model_space)):
             distance = distance_function_to_use(
                 cur_label_fv.flatten(),
@@ -518,8 +519,7 @@ def generate_image_similarity_matrix_from_db(feature_model : str, fs_option : in
                 # Calculate the similarity using your similarity function
                 distance = distance_function_to_use(data[i].flatten(), data[j].flatten())
                 distance_matrix[i,j] = distance
-
-    torch.save(distance_matrix, 'test.pkl')        
+       
     return distance_matrix
     
     
@@ -541,3 +541,9 @@ def generate_matrix_from_image_weight_pairs(data : np.ndarray , fs_option : int 
 
             
     return distance_matrix
+    
+    
+    
+    
+    
+    
