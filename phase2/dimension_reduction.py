@@ -164,16 +164,15 @@ def lda(data_collection: np.ndarray, k: int) -> np.ndarray:
     # normalise value to [0,1]
     normalisation = Normalisation()
     data_collection = normalisation.train_normalize_min_max(data_collection)
-    
-    # there is something weird, for k = 1, currently raising error
-    if k == 1: 
-        # every value comes out as [1.]
-        raise ValueError
 
     lda_model = LDA(n_components=k, max_iter=10, random_state=42, learning_method='batch', verbose=1)
     # print(train_data.shape[0] == len(train_label))
     reduced_data = lda_model.fit_transform(data_collection)
     print(f'Reducing {data_collection.shape} => {reduced_data.shape}')
+    if k == 1: 
+        # every value comes out as [1.]
+        print(reduced_data)
+        raise ValueError
     return reduced_data
 
 
