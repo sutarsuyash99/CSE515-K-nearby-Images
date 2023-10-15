@@ -15,27 +15,31 @@ class task7:
         pass
 
     def distance_function(self, query_vector, data, k ):
-        """Runs the distance function in loop gets you the K top images"""
+        """
+        Runs the distance function in loop gets you the K top images
+        """
         distances = []
         for i in range(len(data)):
-            distances.append(ds.cosine_similarity(query_vector.flatten(), data[i]))
+            distances.append(ds.cosine_distance(query_vector.flatten(), data[i]))
         indexed_list = list(enumerate(distances))
 
         # Sorting the the list 
         sorted_list = sorted(indexed_list, key=lambda x: x[1])
 
-        output_list = sorted_list[- (k+1):].copy()
-        output_list.reverse()
+        output_list = sorted_list[: (k+1)].copy()
+        # Revese the list becasue we are using cosine similarity
+        # output_list.reverse()
         
 
         return output_list
     
     def get_closest_image_id (self, input_image_vector, db_data):
-        """This function Quries that DB and gets the entire feature space for FC, then it finds the closest EVEN
-           image id using cosine distance in a loop
-            Input - input_image_vector
-            Output - Closest EVEN image ID
-            """
+        """
+        This function Quries that DB and gets the entire feature space for FC, then it finds the closest EVEN
+        image id using cosine distance in a loop
+        Input - input_image_vector
+        Output - Closest EVEN image ID
+        """
 
         # Get the entire dataset to find the closest even image
         
@@ -55,7 +59,7 @@ class task7:
         print("Please select from below mentioned options")
 
         # Get input from user for ImageID
-        image_id, pil_image = utils.get_user_input_internalexternal_image()
+        image_id, img = utils.get_user_input_internalexternal_image()
 
         # Get input for ls
         path , option = utils.get_user_input_latent_semantics()
@@ -66,45 +70,58 @@ class task7:
 
         # If input image is external image calculate the feature vectos of the image (FC Layer)
         if image_id == -1:
+            print("\nCalculating feature descriptor for external Image (FC Layer) \n")
             resnet = resnet_features()
-            resnet.run_model(pil_image)
+            resnet.run_model(img)
             input_image_vector = resnet.resnet_fc_layer()
 
             db_data = monogo_query.get_all_feature_descriptor(utils.feature_model[5])
+            print("Getting the closest even ImageId in the DB which is similar to the external Image \n")
             closest_image_id, _ = self.get_closest_image_id(input_image_vector, db_data)
+            closest_image_id = closest_image_id*2
+            print(f"Closest Even imageid - {closest_image_id} using FC Layer \n")
         
         # If input image is Odd image calculte the feature vectos of the image (FC Layer)
         elif not image_id % 2 == 0:
+            print("\nCalculating feature descriptor for Odd ImageId not in database (FC Layer)\n")
             img, _  = dataset[image_id]
             resnet = resnet_features()
             resnet.run_model(img)
             input_image_vector = resnet.resnet_fc_layer()
 
             db_data = monogo_query.get_all_feature_descriptor(utils.feature_model[5])
+            print("Getting the closest even ImageId in the DB which is similar to the odd ImageID provided \n")
             closest_image_id, _ = self.get_closest_image_id(input_image_vector, db_data)
+            closest_image_id = closest_image_id*2
+            print(f"Closest Even imageid - {closest_image_id} using FC Layer \n")
 
 
         # If image is even then fetch the vectors from db
         else:
+            print("\nEven imageid provided fetching the feature descriptor from DB \n")
             input_image_vector = monogo_query.get_feature_descriptor(utils.feature_model[5], image_id)
             closest_vector = input_image_vector
             closest_image_id = image_id
 
         # Startin with LS specific computation 
         if option in [1,4]:
+            print("LS1/4 were selected using the latent spaces to find the top K images \n")
             ls_vector  = data[int(closest_image_id/2)]
             output = self.distance_function(ls_vector,data,k)
 
         elif option == 2:
+            print("LS2 was selected using CP decompose Image factors to find top K images \n")
             ls_vector  = data[1][0][int(closest_image_id/2)]
             cp_data = data[1][0]
             output = self.distance_function(ls_vector,cp_data,k)
             
         else:
+            print("LS3 was selected using closeset label of the image provided \n")
             # IF LS3 get the closest Label and then get the nearest label of that label with Latent Semantics
             all_labels  = np.array(label_vectors.get_all_label_feature_vectors(labelled_image))
-            print(all_labels.shape)
+
             closest_label, _ = self.get_closest_image_id(input_image_vector, all_labels)
+            print(f"Label vector selected has the index{closest_label} - Name - {dataset.categories[closest_label]} \n")
             _ , closest_label_ls = self.get_closest_image_id(data[closest_label], data)
 
             db_data = monogo_query.get_all_feature_descriptor(utils.feature_model[5])
@@ -112,10 +129,11 @@ class task7:
 
 
             
-        
-        output = [(x * 2, y) for x, y in output]
-        print(output)
-        utils.display_k_images_subplots(dataset,output, "TESt")
+        final_output = [(x * 2, y) for x, y in output]
+        print("Output - (ImageId, Cosine Distance)"+ "\n")
+        print(final_output)
+        path = path.replace(f'./LatentSemantics/LS{option}/','')
+        utils.display_k_images_subplots(dataset,final_output, f"Using LS {option} with file {path}", img)
 
         print("Exiting Task7 .............")
 

@@ -94,6 +94,10 @@ class resnet_features():
         return vector_1000 
     
     def apply_softmax(self):
+        """
+        Returns ndarray with shape 1000
+        Final output of resent50 model - Applying Softmax on FC layer.
+        """
         vector_output = self.hook_fc_layer_output[0].squeeze()
         vector_1000 = np.array(vector_output)
         softmax_values = self.softmax(vector_1000)

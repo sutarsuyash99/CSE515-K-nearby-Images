@@ -34,35 +34,41 @@ class Task0b:
             print("Constructing vector for image -- on demand")
             if imageId != -1:
                 img, _ = self.dataset[imageId]
-            if feature_space_name_selected in {"avgpool", "layer3", "fc_layer"}:
+            if feature_space_name_selected in {"avgpool", "layer3", "fc_layer", "resnet_final"}:
                 resnet = resnet_features()
                 resnet.run_model(img)
                 if feature_space_name_selected == utils.feature_model[3]:
                     feature_vector_imageId = resnet.resnet_avgpool()
+
                 elif feature_space_name_selected == utils.feature_model[4]:
                     feature_vector_imageId = resnet.resnet_layer3()
-                else:
+
+                elif feature_space_name_selected == utils.feature_model[5]:
                     feature_vector_imageId = resnet.resnet_fc_layer()
+                
+                else:
+                    feature_vector_imageId = resnet.apply_softmax()
+
             elif feature_space_name_selected == utils.feature_model[1]:
                 cm = color_moments()
                 feature_vector_imageId = cm.color_moments_fn(img)
             else:
                 hog = histogram_of_oriented_gradients()
                 feature_vector_imageId = hog.compute_hog(img)
-            # TODO: show this in same subplot
-            utils.display_image_og(pil_img=img)
+            # TODO: show this in same subplot - DONE
+            # utils.display_image_og(pil_img=img)
         else:
             # if image is in database, increment k by 1 and show all images in same subplot
             k = k + 1
 
         # display top k image from DB
+        distance_function_to_use = utils.select_distance_function_for_model_space(feature_space_selected)
         distances = []
         for i in range(len(model_space)):
-            distance = cosine_distance(
-                feature_vector_imageId.flatten(), model_space[i].flatten()
-            )
-            distances.append((distance, i))
+            distance = distance_function_to_use (feature_vector_imageId.flatten(), model_space[i].flatten())
+            distances.append((distance, i*2))
         distances.sort()
+
         # display image
         top_k = []
         for i in range(k):
@@ -70,8 +76,8 @@ class Task0b:
         print('\n\n','-'*50)
         print(top_k)
         print('-'*50, '\n\n')
-
-        utils.display_k_images_subplots(self.dataset, top_k, "Top K images")
+        
+        utils.display_k_images_subplots(self.dataset, top_k, "Top K images", img)
 
 
 if __name__ == "__main__":
