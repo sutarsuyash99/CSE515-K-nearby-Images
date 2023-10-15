@@ -382,6 +382,7 @@ def convert_image_to_grayscale(image):
 
     return cv2_image
 
+
 def compute_distance_query_image_top_k(
         k: int,
         labelled_feature_vectors: dict,
@@ -399,6 +400,7 @@ def compute_distance_query_image_top_k(
             option: (int) internal map index -- see: feature_model
         """
         top_distances = []
+
         cur_label_fv = labelled_feature_vectors[cur_label]
 
         distance_function_to_use = select_distance_function_for_model_space(option)
@@ -426,11 +428,7 @@ def compute_distance_query_image_top_k(
         return top_k
         
         
- 
 
-
-
- 
 def get_user_input_model_or_space():
         """Helper function to be used in other function to take model or space"""
         print('\n\nSelect : \
@@ -470,7 +468,7 @@ def get_saved_model_files(feature_model : str , latent_space : int =  None, d_re
     
     if len(matching_files) > 0 :
         matching_file = matching_files[0]
-        print(matching_file)
+        #print(matching_file)
         return matching_file
     else :
         return None
@@ -511,19 +509,19 @@ def generate_image_similarity_matrix_from_db(feature_model : str, fs_option : in
 
     N = data.shape[0]
     distance_matrix = np.zeros((N, N))
-    distance_function_to_use = utils.select_distance_function_for_model_space(fs_option)
+    distance_function_to_use = select_distance_function_for_model_space(fs_option)
     
     #If feature space is color_moment or hog use cosine or use euclidean
     for i in tqdm(range(N)):
         for j in range(N):
             
                 # Calculate the similarity using your similarity function
-                distance = distances.distance_function_to_use(data[i].flatten(), data[j].flatten())
+                distance = distance_function_to_use(data[i].flatten(), data[j].flatten())
                 distance_matrix[i,j] = distance
 
-            
+    torch.save(distance_matrix, 'test.pkl')        
     return distance_matrix
-   
+    
     
 def generate_matrix_from_image_weight_pairs(data : np.ndarray , fs_option : int ) -> np.ndarray :
     
@@ -532,13 +530,13 @@ def generate_matrix_from_image_weight_pairs(data : np.ndarray , fs_option : int 
     '''
     N = data.shape[0]
     distance_matrix = np.zeros((N, N))
-    
+    distance_function_to_use = select_distance_function_for_model_space(fs_option)
     #If feature space is color_moment or hog use cosine or use euclidean
     for i in tqdm(range(N)):
         for j in range(N):
             
                 # Calculate the similarity using your similarity function
-                distance = distances.distance_function_to_use(data[i].flatten(), data[j].flatten())
+                distance = distance_function_to_use(data[i].flatten(), data[j].flatten())
                 distance_matrix[i,j] = distance
 
             

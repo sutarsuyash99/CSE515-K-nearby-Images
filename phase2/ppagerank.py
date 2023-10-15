@@ -114,7 +114,7 @@ def pagerank(distance_matrix : np.ndarray, label_representatives : list, m : int
     #The matrix saved in task 6 saves distances
     similarity_matrix = np.ones(distance_matrix.shape)
     similarity_matrix = similarity_matrix - distance_matrix
-              
+    print(similarity_matrix[0][0])
     #Damping factor : Probability for random walk and random jump
     #B -> Probability of random walk , (1-B) -> Probability of random jump or Seed Jump
     #By convention between 0.8 and 0.9 
