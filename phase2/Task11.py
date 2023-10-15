@@ -4,13 +4,16 @@ import distances
 from Mongo.mongo_query_np import get_all_feature_descriptor
 import torch
 from ppagerank import pagerank
+from label_vectors import get_all_label_feature_vectors
+import numpy as np
+from topk import query_label_image_top_k
 
 class Task11:
 
     def __init__(self):
         self.dataset, self.labelled_images = utils.initialise_project()
-    
-        
+
+
     def get_label(self) :
     
         #Get the label id 
@@ -24,15 +27,24 @@ class Task11:
         print(f"Input provided: {label_index_selected} => {label_selected}")
         return label_index_selected, label_selected
         
-    def get_label_representatives(self, k : int, label_id : int, feature : str) -> list :
+    def get_label_representatives(self, feature_model : str , feature : int, label_name :str,label_id : int, ) -> list :
         
-        #Place holder function gives the cloeset image id/ ids for the feature_model or latent_space_feature_model
-        #Get from the task1 or task10 
-        ###Temporary placeholder 
-        seeds = [0]
+        # For a feature space or latent space and feature space get label representatives
+        # 2 cases 
+        print("How many seed images to use for a label : default 1 : ")
+        k = input("Press enter for default value")
+        
+        if not k :
+            k = 1
+        else :
+            k = int(k)
+        print('Seed used : ')
+        seeds = query_label_image_top_k(k, feature_model, feature, label_name, label_id)
+        
         return seeds
+        
     
-    def pagerankcall(self, matrix, seeds : list, m : int, n : int, label):
+    def pagerankcall(self, matrix, seeds : list, m : int, n : int, label : str):
     
         rankings = pagerank(matrix, seeds, m, n) 
                     
@@ -52,8 +64,7 @@ class Task11:
         
         #Get the feature space or latent space with feature space to operate
         option = utils.get_user_input_model_or_space()
-        #Number of label represntatives to get
-        k = 1  
+
 
         match option :
             
@@ -67,7 +78,7 @@ class Task11:
                 print("\n")
                 print("*"*25 + " Feature Model "+ "*"*25)
                 print("Please select from below mentioned options")
-                data, feature, dbName = utils.get_user_selected_feature_model()
+                model_space, feature, dbName = utils.get_user_selected_feature_model()
                 
                 feature_model = utils.feature_model[feature]
                 
@@ -89,10 +100,10 @@ class Task11:
                     label_id, _ = self.get_label()
                     if label_id != None :
                         break
-                label = self.dataset.categories[label_id]
+                label_name = self.dataset.categories[label_id]
                 
                 #Get label representative in particular feature model
-                seeds = self.get_label_representatives(k, label_id, feature_model)
+                seeds = self.get_label_representatives( feature_model, feature, label_name, label_id)
                 
                 print("\nEnter value for number of similar images to find - m : ")
                 m = utils.int_input()
@@ -100,8 +111,11 @@ class Task11:
                 print("\nEnter value for n : ")
                 n = utils.int_input()
                 
-                self.pagerankcall(matrix, seeds, m, n, label)
-                    
+                self.pagerankcall(matrix, seeds, m, n, label_name)
+            
+
+
+            
             case 2 : 
                 
                 '''
@@ -117,23 +131,30 @@ class Task11:
                 ls_option, fs_option, dr_option = utils.get_user_selected_latent_space_feature_model()
                 d_reduction = utils.latent_semantics[dr_option]
                 
-                #feature_model name
-                feature_model = utils.feature_model[fs_option]
                 
-                #Check if model exists for that options 
-                #LS3 not implemented
                 if ls_option == 3 :
+                    #LS3 not implemented
                     print("Not implemented")
+  
                 else :  
+                
+                    #feature_model name
+                    feature_model = utils.feature_model[fs_option]
+                
+                    #Check if model exists for that options 
                     file = utils.get_saved_model_files(feature_model=feature_model, latent_space=ls_option, d_reduction=d_reduction)
                     if file == None :
                         print(f'No saved model for LS{ls_option} - {feature_model} - {d_reduction}')
                         print(f'Please run task 3-6 to generate model for LS{ls_option} - {feature_model} - {d_reduction}')
                     else :
                         f_name = file.split('\\')[-1]
-                        f_latents = ''.join(f_name.split('.')[0]).split('-')[-1]
-                        print(f"Factors file exist for the selected option - {f_latents} feature")
+                        
+                        print(f"Factors file exist for the selected option - {f_name} feature")
                         file = torch.load(file)
+                        
+                        if type(file) == tuple :
+                            file = file[0]
+                        
                         print("File loaded...\n")
                         
                         
@@ -151,9 +172,15 @@ class Task11:
                         label = self.dataset.categories[label_id]
                     
                         #Get label representative in particular feature model
-                        seeds = self.get_label_representatives(k, label_id, feature_model)
+                        #seeds = self.get_label_representatives(k, label_id, feature_model)
                         
-                        self.pagerankcall(matrix, seeds, m, n, label)
+                        print("\nEnter value for number of similar images to find - m : ")
+                        m = utils.int_input()
+                
+                        print("\nEnter value for n : ")
+                        n = utils.int_input()
+                        
+                        self.pagerankcall(matrix, seeds, m, n, label_name)
                     
 
 if __name__ == "__main__":
