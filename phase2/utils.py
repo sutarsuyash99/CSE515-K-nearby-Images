@@ -451,6 +451,10 @@ def get_saved_model_files(feature_model : str , latent_space : int =  None, d_re
     #Case 1 : Only feature_model no latent_semantics 
     if latent_space == None :
         pattern = f'image_image_{feature_model}*pkl'
+    
+    #Case 2 : CP-decomposition
+    elif latent_space == 2 :
+        pattern = f'LS{latent_space}_{feature_model}*.pkl'
     #Case 2 : Latent semantics and feature_model
     elif latent_space != None :
         pattern = f'LS{latent_space}_{feature_model}_{d_reduction}*.pkl'
@@ -499,10 +503,10 @@ def get_user_selected_latent_space_feature_model():
     _, fs_option, _ = get_user_selected_feature_model()
     
     #Get dimensionality reduction
-    dr_option = get_user_selected_dim_reduction()
-    
-    return ls_option, fs_option, dr_option
-
+    if ls_option != 2 :
+        dr_option = get_user_selected_dim_reduction()
+        return ls_option, fs_option, dr_option
+    return ls_option, fs_option, None
   
 def generate_image_similarity_matrix_from_db(feature_model : str, fs_option : int) -> np.ndarray :
     
@@ -540,11 +544,19 @@ def generate_matrix_from_image_weight_pairs(data : np.ndarray , fs_option : int 
                 distance = distance_function_to_use(data[i].flatten(), data[j].flatten())
                 distance_matrix[i,j] = distance
 
-            
+         
     return distance_matrix
     
     
     
+def generate_matrix_from_label_label_matrix(label_data : np.ndarray , fs_option : int, labelled_images : np.ndarray ) -> np.ndarray :    
+    
+    '''
+    Generates image_image similarity matrix from label_label similarity matrix 
+    '''
+    
+    print(labelled_images)
+    print(labelled_images[0])
     
     
     
