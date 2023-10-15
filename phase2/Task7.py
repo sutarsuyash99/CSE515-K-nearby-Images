@@ -3,7 +3,7 @@ import utils
 import dimension_reduction as dr
 import numpy as np
 import distances as ds
-import Mongo.mongo_query_np  as monogo_query
+import Mongo.mongo_query_np  as mongo_query
 from sortedcollections import OrderedSet
 from resnet_50 import resnet_features
 import torchvision
@@ -12,7 +12,7 @@ import label_vectors
 
 class task7:
     def __init__(self) -> None:
-        pass
+        self.dataset, self.labelled_image = utils.initialise_project()
 
     def distance_function(self, query_vector, data, k ):
         """
@@ -48,12 +48,25 @@ class task7:
         closest_image_id = output[0][0]
         next_id = output[1][0]
         return closest_image_id, next_id
+    
+    def get_closest_image_id_ls3 (self, input_image_vector, db_data):
+        """
+        Same as above but return distances as well
+        """
+
+        # Get the entire dataset to find the closest even image
+        
+        output = self.distance_function(input_image_vector, db_data, 1)
+        print(output)
+        closest_image_id = output[0][0]
+        next_id = output[1][0]
+        return output[0], output[1]
 
     def image_in_image_out(self):
         """This program takes input from the user for ImageId, 
         K and Latent Semantics to be used and displys K most similar images"""
         
-        dataset, labelled_image = utils.initialise_project()
+        
 
         print("*"*25 + " Task 7 "+ "*"*25)
         print("Please select from below mentioned options")
@@ -75,7 +88,7 @@ class task7:
             resnet.run_model(img)
             input_image_vector = resnet.resnet_fc_layer()
 
-            db_data = monogo_query.get_all_feature_descriptor(utils.feature_model[5])
+            db_data = mongo_query.get_all_feature_descriptor(utils.feature_model[5])
             print("Getting the closest even ImageId in the DB which is similar to the external Image \n")
             closest_image_id, _ = self.get_closest_image_id(input_image_vector, db_data)
             closest_image_id = closest_image_id*2
@@ -84,12 +97,12 @@ class task7:
         # If input image is Odd image calculte the feature vectos of the image (FC Layer)
         elif not image_id % 2 == 0:
             print("\nCalculating feature descriptor for Odd ImageId not in database (FC Layer)\n")
-            img, _  = dataset[image_id]
+            img, _  = self.dataset[image_id]
             resnet = resnet_features()
             resnet.run_model(img)
             input_image_vector = resnet.resnet_fc_layer()
 
-            db_data = monogo_query.get_all_feature_descriptor(utils.feature_model[5])
+            db_data = mongo_query.get_all_feature_descriptor(utils.feature_model[5])
             print("Getting the closest even ImageId in the DB which is similar to the odd ImageID provided \n")
             closest_image_id, _ = self.get_closest_image_id(input_image_vector, db_data)
             closest_image_id = closest_image_id*2
@@ -99,7 +112,7 @@ class task7:
         # If image is even then fetch the vectors from db
         else:
             print("\nEven imageid provided fetching the feature descriptor from DB \n")
-            input_image_vector = monogo_query.get_feature_descriptor(utils.feature_model[5], image_id)
+            input_image_vector = mongo_query.get_feature_descriptor(utils.feature_model[5], image_id)
             closest_vector = input_image_vector
             closest_image_id = image_id
 
@@ -118,14 +131,39 @@ class task7:
         else:
             print("LS3 was selected using closeset label of the image provided \n")
             # IF LS3 get the closest Label and then get the nearest label of that label with Latent Semantics
-            all_labels  = np.array(label_vectors.get_all_label_feature_vectors(labelled_image))
+            all_labels  = np.array(label_vectors.get_all_label_feature_vectors(self.labelled_image))
 
             closest_label, _ = self.get_closest_image_id(input_image_vector, all_labels)
-            print(f"Label vector selected has the index{closest_label} - Name - {dataset.categories[closest_label]} \n")
-            _ , closest_label_ls = self.get_closest_image_id(data[closest_label], data)
+            print(f"Label vector selected has the index{closest_label} - Name - {self.dataset.categories[closest_label]} \n")
+            top_k_labels = self.distance_function(all_labels[closest_label],all_labels,k)
 
-            db_data = monogo_query.get_all_feature_descriptor(utils.feature_model[5])
-            output = self.distance_function(all_labels[closest_label_ls],db_data,k)
+            # going in FC layer
+            print("Found k labels now going in FC layer")
+            collection_name_in_consideration = utils.feature_model[5]
+            top_k_distances = []
+            all_features = mongo_query.get_all_feature_descriptor(
+                collection_name_in_consideration
+            )
+
+            for i in top_k_labels:
+                cur_label = self.dataset.categories[i[0]]
+                cur_ls_model = label_vectors.label_fv_kmediods(
+                    cur_label, collection_name_in_consideration
+                )
+
+                # find 1 closest image
+                top_k_distances_1, _ = self.get_closest_image_id_ls3(
+                    cur_ls_model, all_features)
+                print(
+                    f"For label {cur_label} found closest image: {top_k_distances_1[0]* 2} with distance: {top_k_distances_1[1]}"
+                )
+                top_k_distances.append((top_k_distances_1[0],i[1]))
+            print("-" * 25)
+            # _ , closest_label_ls = self.get_closest_image_id(data[closest_label], data)
+
+            # db_data = mongo_query.get_all_feature_descriptor(utils.feature_model[5])
+            # output = self.distance_function(all_labels[closest_label_ls],db_data,k)
+            output = top_k_distances
 
 
             
@@ -133,7 +171,7 @@ class task7:
         print("Output - (ImageId, Cosine Distance)"+ "\n")
         print(final_output)
         path = path.replace(f'./LatentSemantics/LS{option}/','')
-        utils.display_k_images_subplots(dataset,final_output, f"Using LS {option} with file {path}", img)
+        utils.display_k_images_subplots(self.dataset,final_output, f"Using LS {option} with file {path}", img)
 
         print("Exiting Task7 .............")
 
