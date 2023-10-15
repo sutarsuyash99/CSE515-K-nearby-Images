@@ -15,7 +15,7 @@ import distances
 import glob
 import distances
 from tqdm import tqdm
-
+import Mongo.mongo_query_np as mongo_query
 
 # from ordered_set import OrderedSet
 
