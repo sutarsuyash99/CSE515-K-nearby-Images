@@ -6,7 +6,7 @@ import torch
 from ppagerank import pagerank
 from label_vectors import get_all_label_feature_vectors
 import numpy as np
-from topk import query_label_image_top_k
+from topk import query_label_image_top_k, query_label_image_top_k_ls
 
 class Task11:
 
@@ -27,7 +27,7 @@ class Task11:
         print(f"Input provided: {label_index_selected} => {label_selected}")
         return label_index_selected, label_selected
         
-    def get_label_representatives(self, feature_model : str , feature : int, label_name :str,label_id : int, ) -> list :
+    def get_label_representatives(self, feature_model : str , feature : int, label_name :str,label_id : int, latent_space : int = None, latent_semantic : str = None, labelled_images : dict = None ) -> list :
         
         # For a feature space or latent space and feature space get label representatives
         # 2 cases 
@@ -39,8 +39,16 @@ class Task11:
         else :
             k = int(k)
         print('Seed used : ')
-        seeds = query_label_image_top_k(k, feature_model, feature, label_name, label_id)
         
+        #Case 1 : Only feature model 
+        if latent_space == None :
+            seeds = query_label_image_top_k(k, feature_model, feature, label_name, label_id)
+        
+        #Case 2 : Latent Space and feature model
+        else :
+            print("Here")
+            seeds = query_label_image_top_k_ls(k, feature_model, feature, label_name, label_id, latent_space, latent_semantic, labelled_images)
+            
         return seeds
         
     
@@ -113,8 +121,6 @@ class Task11:
                 
                 self.pagerankcall(matrix, seeds, m, n, label_name)
             
-
-
             
             case 2 : 
                 
@@ -169,10 +175,10 @@ class Task11:
                             label_id, _ = self.get_label()
                             if label_id != None :
                                 break
-                        label = self.dataset.categories[label_id]
+                        label_name = self.dataset.categories[label_id]
                     
                         #Get label representative in particular feature model
-                        #seeds = self.get_label_representatives(k, label_id, feature_model)
+                        seeds = self.get_label_representatives( feature_model, fs_option, label_name, label_id, ls_option, d_reduction, self.labelled_images )
                         
                         print("\nEnter value for number of similar images to find - m : ")
                         m = utils.int_input()
