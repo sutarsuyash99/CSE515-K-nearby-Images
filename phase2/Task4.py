@@ -64,6 +64,11 @@ class task4:
             model[i, : , label_id ] = feature
             i += 1
 
+        # Tried adding random values and ones in the empy space - Results detirieted after that 
+        # random_values = np.random.rand(*model.shape)  
+        # final = np.where(model == 0, random_values, model)
+        # final = np.where(model == 0, 1, model)
+
         return model
 
 if __name__ == "__main__":
