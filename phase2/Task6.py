@@ -44,7 +44,7 @@ class task6:
         match ls_option:
             case 1: W, _ , _ = dr.svd(V, k)
             case 2: W, _  = dr.nmf_als(V, k)
-            case 3: W = dr.lda(k, V)
+            case 3: W = dr.lda(V, k)
             case 4: W = dr.K_means(k, V)
             case default: print('No matching input was selected')
         
