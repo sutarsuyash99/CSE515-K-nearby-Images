@@ -31,14 +31,14 @@ class Task11:
         
         # For a feature space or latent space and feature space get label representatives
         # 2 cases 
-        print("How many seed images to use for a label : default 1 : ")
-        k = input("Press enter for default value")
+        print("\nHow many seed images to use for a label : default 1 : ")
+        k = input("Press enter for default value    ")
         
         if not k :
             k = 1
         else :
             k = int(k)
-        print('Seed used : ')
+        print('#### Seed used ####: ')
         
         #Case 1 : Only feature model 
         if latent_space == None :
@@ -46,9 +46,8 @@ class Task11:
         
         #Case 2 : Latent Space and feature model
         else :
-            print("Here")
             seeds = query_label_image_top_k_ls(k, feature_model, feature, label_name, label_id, latent_space, latent_semantic, labelled_images)
-            
+        print('###################: ')    
         return seeds
         
     
@@ -135,59 +134,63 @@ class Task11:
                 
                 #latent space, feature space and dimensionality reduction/letant semantics 
                 ls_option, fs_option, dr_option = utils.get_user_selected_latent_space_feature_model()
-                d_reduction = utils.latent_semantics[dr_option]
                 
+                #special case for LS2 - CP decomposition for others :
+                if ls_option != 2 :
+                    d_reduction = utils.latent_semantics[dr_option]
+                else :
+                    d_reduction = dr_option
+
+                #feature_model name
+                feature_model = utils.feature_model[fs_option]
                 
-                if ls_option == 3 :
-                    #LS3 not implemented
-                    print("Not implemented")
-  
-                else :  
-                
-                    #feature_model name
-                    feature_model = utils.feature_model[fs_option]
-                
-                    #Check if model exists for that options 
-                    file = utils.get_saved_model_files(feature_model=feature_model, latent_space=ls_option, d_reduction=d_reduction)
-                    if file == None :
-                        print(f'No saved model for LS{ls_option} - {feature_model} - {d_reduction}')
-                        print(f'Please run task 3-6 to generate model for LS{ls_option} - {feature_model} - {d_reduction}')
-                    else :
-                        f_name = file.split('\\')[-1]
+                #Check if model exists for that options 
+                file = utils.get_saved_model_files(feature_model=feature_model, latent_space=ls_option, d_reduction=d_reduction)
+                if file == None :
+                    print(f'No saved model for LS{ls_option} - {feature_model} - {d_reduction}')
+                    print(f'Please run task 3-6 to generate model for LS{ls_option} - {feature_model} - {d_reduction}')
+                else :
+                    f_name = file.split('\\')[-1]
+                    
+                    print(f"Factors file exist for the selected option - {f_name} feature")
+                    file = torch.load(file)
+                    
+                    #Special case for LS2 : image weight pairs 
+                    if ls_option == 2 :
+                        file = file[1][0]
+
+                    print("File loaded...\n")
+                    
+                    #Special case for LS5  : label_label matrix 
+                    if ls_option == 3 :
+                            
+                        print("Generating image_image similarity matrix by mapping the label-label matrix.....")
+                        matrix = utils.generate_matrix_from_label_label_matrix(file, fs_option, self.labelled_images)
                         
-                        print(f"Factors file exist for the selected option - {f_name} feature")
-                        file = torch.load(file)
-                        
-                        if type(file) == tuple :
-                            file = file[0]
-                        
-                        print("File loaded...\n")
-                        
-                        
+                    else :    
                         #check if image_image matrix file exits
-                        
                         #if not then generate 
                         print("Generating scores based on the weights....")
                         matrix = utils.generate_matrix_from_image_weight_pairs(file, fs_option)
                         print("Model loaded...\n")
-                        
-                        while True :
-                            label_id, _ = self.get_label()
-                            if label_id != None :
-                                break
-                        label_name = self.dataset.categories[label_id]
                     
-                        #Get label representative in particular feature model
-                        seeds = self.get_label_representatives( feature_model, fs_option, label_name, label_id, ls_option, d_reduction, self.labelled_images )
-                        
-                        print("\nEnter value for number of similar images to find - m : ")
-                        m = utils.int_input()
+                    while True :
+                        label_id, _ = self.get_label()
+                        if label_id != None :
+                            break
+                    label_name = self.dataset.categories[label_id]
                 
-                        print("\nEnter value for n : ")
-                        n = utils.int_input()
-                        
-                        self.pagerankcall(matrix, seeds, m, n, label_name)
+                    #Get label representative in particular feature model
+                    seeds = self.get_label_representatives( feature_model, fs_option, label_name, label_id, ls_option, d_reduction, self.labelled_images )
                     
+                    print("\nEnter value for number of similar images to find - m : ")
+                    m = utils.int_input()
+                
+                    print("\nEnter value for n : ")
+                    n = utils.int_input()
+                    
+                    self.pagerankcall(matrix, seeds, m, n, label_name)
+                
 
 if __name__ == "__main__":
     task11 = Task11()
