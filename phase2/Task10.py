@@ -73,7 +73,7 @@ class Task10:
                 # LS1 - compare cur_label_fv with latent_model_space
                 # use latent_model_space
                 # get top k images
-                closest_image_vector = latent_model_space[closest_image_id // 2]
+                closest_image_vector = latent_model_space[closest_image_id]
                 print(f"Moving to latent space {option} retrieving top {k} images")
                 top_k_distances = self.compute_closet_distance(
                     closest_image_vector, latent_model_space, k
@@ -90,7 +90,7 @@ class Task10:
                     f"Moving to latent space {option} retrieving top {k} images ... image weights distribution"
                 )
                 latent_model_space = latent_model_space[1][0]
-                closest_image_vector = latent_model_space[closest_image_vector // 2]
+                closest_image_vector = latent_model_space[closest_image_id]
                 top_k_distances = self.compute_closet_distance(
                     closest_image_vector, latent_model_space, k
                 )
@@ -103,7 +103,7 @@ class Task10:
                 )
                 print(closest_image_id)
                 print(f"Moving to latent space {option} retrieving top {k} images")
-                closest_image_vector = latent_model_space[closest_image_id // 2]
+                closest_image_vector = latent_model_space[closest_image_id]
                 top_k_distances = self.compute_closet_distance(
                     closest_image_vector, latent_model_space, k
                 )
@@ -144,7 +144,7 @@ class Task10:
                     top_k_distances.append(top_k_distances_1)
                 print("-" * 25)
             case default:
-                print("yeh toh bada toi hai!!")
+                print("Wrong Input was pass ")
 
         top_k_distances = [(id * 2, distance) for id, distance in top_k_distances]
         print(top_k_distances)
