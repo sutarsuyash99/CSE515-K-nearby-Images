@@ -80,12 +80,7 @@ def power_iteration_rank(A: np.ndarray, R : np.ndarray) -> np.ndarray :
 
 def pagerank(distance_matrix : np.ndarray, label_representatives : list, m : int, n : int, method='power') -> list :
     
-    '''
-    Pending : 1.What should be label representatives 
-              2.Image ids need to be converted to even as the input database is only even images
-              3.Should the label representative also be returned among m, because it will always have highest pagerank
-              4.Seed noise reduction from professors paper
-    '''
+
 
     '''
     Input : 
@@ -117,9 +112,9 @@ def pagerank(distance_matrix : np.ndarray, label_representatives : list, m : int
     similarity_matrix = similarity_matrix - distance_matrix
     
     #Damping factor : Probability for random walk and random jump
-    #B -> Probability of random walk , (1-B) -> Probability of random jump or Seed Jump
+    # (1-B) -> Probability of random walk , B -> Probability of random jump or Seed Jump
     #By convention between 0.8 and 0.9 
-    B = 0.85
+    B = 0.15
     
     
     #Create a graph from the similarity matrix where each vertex has n edges w.r.t similarity scores
@@ -147,7 +142,7 @@ def pagerank(distance_matrix : np.ndarray, label_representatives : list, m : int
     
     #Final matrix : transformation matrix combining all probabilities
     #Personalized pagerank formula where T is the transition matrix probability of B and E is seed jumps with probability 1-B i.e about every 5-6 walks, since B is between 0.8 to 0.9
-    A = (B * T) + ((1-B) * E)
+    A = ((1-B)* T) + (B * E)
     
     
     #Rank vector : Maintains the personalized page ranks, Initialized with probability 1/N for all nodes
