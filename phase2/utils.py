@@ -558,7 +558,7 @@ def generate_image_similarity_matrix_from_db(feature_model : str, fs_option : in
                 distance = distance_function_to_use(data[i].flatten(), data[j].flatten())
                 distance_matrix[i,j] = distance
     
-    torch.save(distance_matrix,f'./SimilarityMatrix/image_image_similarity_matrix_{feature_model}.pkl')
+    torch.save(distance_matrix,f'./LatentSemantics/LS4/image_image_matrix/image_image_similarity_matrix_{feature_model}.pkl')
     return distance_matrix
     
     

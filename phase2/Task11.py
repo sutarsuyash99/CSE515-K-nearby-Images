@@ -40,22 +40,27 @@ class Task11:
         
         # For a feature space or latent space and feature space get label representatives
         # 2 cases 
-        print("\nHow many seed images to use for a label : default 1 : ")
-        k = input("Press enter for default value    ")
+        print("\nThere are 2 options to select seed images\
+              \n\
+              \n1. Single image to be used as seed\
+              \n2. All label images to be used as seed")
         
-        if not k :
-            k = 1
-        else :
-            k = int(k)
+        k = utils.int_input(1)
         print('#### Seed used ####: ')
-        
-        #Case 1 : Only feature model 
-        if latent_space == None :
-            seeds = query_label_image_top_k(k, feature_model, feature, label_name, label_id)
-        
-        #Case 2 : Latent Space and feature model
-        else :
-            seeds = query_label_image_top_k_ls(k, feature_model, feature, label_name, label_id, latent_space, latent_semantic, labelled_images)
+        if k == 2:
+            all = self.labelled_images[label_name]
+            seeds = []
+            for i in all: 
+                if i % 2 == 0: 
+                    print(f'Image Id: {i}')
+                    seeds.append(i//2)
+        else: 
+            if latent_space == None :
+                seeds = query_label_image_top_k(1, feature_model, feature, label_name, label_id)
+            
+            #Case 2 : Latent Space and feature model
+            else :
+                seeds = query_label_image_top_k_ls(1, feature_model, feature, label_name, label_id, latent_space, latent_semantic, labelled_images)
         print('###################: ')    
         return seeds
     
