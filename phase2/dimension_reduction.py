@@ -43,7 +43,6 @@ def svd(D, k, center = True):
     E = E.real[sorted_indices]
     U = eigenvectors_DDT.real[:, :len(E)]
     VT = eigenvectors_DTD.real[:len(E), :]
-    k = 5
     U_k = U[:, :k]
     E_k = E[:k]
     VT_k = VT[:k, :]
@@ -261,7 +260,7 @@ def K_means(k, data_collection):
         for i in range(len(data)): # for each data point
             min_distance = float('inf')
             for j in range(len(centroids)): # check with each centroid of cluster
-                distance = distances.euclidean_distance(data[i], centroids[j])
+                distance = distances.cosine_distance(data[i], centroids[j])
                 if distance < min_distance:
                     min_distance = distance
                     cluster_assignment[i] = j  # Assign the data point to the nearest centroid
