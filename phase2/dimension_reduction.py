@@ -167,7 +167,7 @@ def nmf_als(V, K, iteration=200, tol=1, alpha=0.01):
         W = W * (np.dot(V, H.T) ) / (np.dot(W, np.dot(H, H.T)) )
 
         # Error or distance from the original matrix , NMF for very large matrix have distance > 300
-        residual = np.linalg.norm(V - np.dot(W, H))
+        residual = np.square(np.linalg.norm(V - np.dot(W, H)))
         
 
         # Check for convergence
