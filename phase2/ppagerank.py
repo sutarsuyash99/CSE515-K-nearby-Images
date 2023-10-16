@@ -173,7 +173,13 @@ def pagerank(distance_matrix : np.ndarray, label_representatives : list, m : int
         
 
     #Sort and return the ids and scores :
-    top_m_ids = np.argsort(R)[::-1][:m]
+    top_m_ids = np.argsort(R)[::-1]
+    # pick m values which are not in seed
+    a = []
+    for i in top_m_ids:
+        if len(a) > m: break
+        if i not in label_representatives: a.append(i)
+    top_m_ids = a
     top_m_scores = R[top_m_ids]
     
     rankings = [ (index, scores) for index, scores in zip(top_m_ids, top_m_scores) ]
