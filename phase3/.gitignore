@@ -1,0 +1,15 @@
+data/
+**.pkl
+**/bin
+**/lib
+**/include
+**/Scripts
+**/.vscode
+**/etc
+**/share
+**/__pycache__
+**/.DS_Store
+test*
+phase2/
+models/
+pyvenv.cfg
