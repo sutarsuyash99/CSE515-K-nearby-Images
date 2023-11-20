@@ -26,15 +26,17 @@ class Task2a:
         if feature_vector_imageId is None:
             if imageId != -1:
                 img, _ = self.dataset[imageId]
-            if feature_space_name_selected in {"avgpool", "layer3", "fc_layer"}:
+            if feature_space_name_selected in {"avgpool", "layer3", "fc_layer", "resnet_final"}:
                 resnet = resnet_features()
                 resnet.run_model(img)
                 if feature_space_name_selected == utils.feature_model[3]:
                     feature_vector_imageId = resnet.resnet_avgpool()
                 elif feature_space_name_selected == utils.feature_model[4]:
                     feature_vector_imageId = resnet.resnet_layer3()
-                else:
+                elif feature_space_name_selected == utils.feature_model[5]:
                     feature_vector_imageId = resnet.resnet_fc_layer()
+                else:
+                    feature_vector_imageId = resnet.apply_softmax()
             elif feature_space_name_selected == utils.feature_model[1]:
                 cm = color_moments()
                 feature_vector_imageId = cm.color_moments_fn(img)
