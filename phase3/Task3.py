@@ -15,10 +15,11 @@ class Task3:
         option: int,
         label_vectors: np.ndarray,
         input_image_vector: np.ndarray,
+        B: float,
     ) -> list:
         connections = 2
         id_rank = classifiers.ppr_classifier(
-            connections, number_clusters, label_vectors, input_image_vector, option
+            connections, number_clusters, label_vectors, input_image_vector, option, B
         )
 
         name_rank = [
@@ -78,9 +79,23 @@ class Task3:
 
         if input_image_vector is None:
             print(f"Image not in DB: {imgId}")
-            # TODO: left part
 
-        number_clusters = utils.int_input(10)
+            top_k = utils.get_closest_image_from_db_for_image(
+                imgId, image_vectors, option, 1, self.dataset
+            )
+            closest_index = top_k[0][0]
+            input_image_vector = mongo_query.get_feature_descriptor(
+                utils.feature_model[option], closest_index
+            )
+            print(
+                f"Closest image index: {closest_index} with feature shape: {input_image_vector.shape}"
+            )
+
+        number_clusters = utils.get_user_input_numeric_common(10, "Top m")
+        # Damping factor : Probability for random walk and random jump
+        # (1-B) -> Probability of random walk , B -> Probability of random jump or Seed Jump
+        # By convention between 0.8 and 0.9
+        B = utils.get_user_input_numeric_common(0.15, "damping factor")
 
         option = utils.get_user_selection_classifier()
         # 1 -> kNN
@@ -88,14 +103,15 @@ class Task3:
         # 3 -> PPR
         t3 = Task3()
         res = None
+        print("-" * 40)
         match option:
             case 3:
-                # res = task3.ppr_classifier(
-                #     number_clusters, option, label_vectors, input_image_vector
-                # )
-                res = task3.ppr_classifier_img_img(
-                    number_clusters, option, image_vectors, imgId, label_vectors
+                res = task3.ppr_classifier(
+                    number_clusters, option, label_vectors, input_image_vector, B
                 )
+                # res = task3.ppr_classifier_img_img(
+                #     number_clusters, option, image_vectors, imgId, label_vectors
+                # )
 
         t3.print_labels(res)
 

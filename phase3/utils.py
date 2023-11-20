@@ -1,13 +1,12 @@
 from typing import Tuple
 import math
 from collections import defaultdict
-from PIL import ImageOps
+from PIL import ImageOps, Image
 import PIL
 import torchvision
 import torch
 from matplotlib import pyplot
 from torchvision import datasets
-from PIL import Image
 import numpy as np
 import pandas as pd
 import os
@@ -15,9 +14,10 @@ import distances
 import glob
 import distances
 from tqdm import tqdm
-import Mongo.mongo_query_np as mongo_query
 import heapq
 
+from resnet_50 import resnet_features
+import Mongo.mongo_query_np as mongo_query
 
 # from ordered_set import OrderedSet
 
@@ -286,14 +286,17 @@ def get_user_input_label():
     label = int_input(0)
     return label
 
+
 def get_user_selection_classifier():
     """This is a helper code which prints all the available classifiers code and take input from user"""
-    print('Select your option:\
+    print(
+        "Select your option:\
           \n\n\
           \n1. m-NN\
           \n2. Decision Tree\
           \n3. PPR classifier\
-          \n\n')
+          \n\n"
+    )
     option = int_input(3)
     return option
 
@@ -622,41 +625,6 @@ def get_user_selected_latent_space_feature_model():
     return ls_option, fs_option, None
 
 
-def generate_matrix(option: int, f1: np.ndarray, f2: np.ndarray) -> np.ndarray:
-    """
-    Function to generate Matrix of distances using selected
-    model space (and corresponding distance)
-    """
-    distance_matrix = np.zeros((f1.shape[0], f2.shape[0]))
-    distance_function_to_use = select_distance_function_for_model_space(option)
-
-    for i in range(f1.shape[0]):
-        for j in range(f2.shape[0]):
-            distance = distance_function_to_use(f1[i].flatten(), f2[j].flatten())
-            distance_matrix[i, j] = distance
-
-    # print("Matrix", distance_matrix.shape)
-    # print(distance_matrix)
-    return distance_matrix
-
-
-def generate_image_label_similarity_matrix(
-    fs_option: int, ls_option: int
-) -> np.ndarray:
-    model_space = feature_model[fs_option]
-    feature_space = get_all_feature_descriptor(model_space)
-    # convert to 4339, fx
-    feature_space = convert_higher_dims_to_2d(feature_space)
-    # print('Image Feature Space', len(feature_space), type(feature_space[0]), feature_space.shape)
-
-    label_model_space = label_feature_model[ls_option]
-    label_space = get_label_feature_descriptor(label_model_space)
-    # convert to 4339, fx
-    label_space = convert_higher_dims_to_2d(label_space)
-    # print('Label Feature Space', label_space.shape)
-
-    return generate_matrix(fs_option, feature_space, label_space)
-
 def get_label_vectors(ls_option: int) -> np.ndarray:
     label_model_space = label_feature_model[ls_option]
     label_space = get_label_feature_descriptor(label_model_space)
@@ -713,6 +681,16 @@ def get_closest_label_for_image(
     model_space_selection: int,
     top_k: int,
 ) -> list:
+    """
+    Helper function to get closest label vector to the input feature vector space
+    Inputs:
+        label_vectors: all the vectors of feature space, currently only fc is in DB
+        image_features: feature vectors of image
+        model_space_selection: int option to select distance formula to use
+        top_k: value of top distances to return
+    Returns:
+        List of tuples of distances with index, distance to it
+    """
     distance_fn_to_use = distance_function_per_feature_model[model_space_selection]
     distance_heaps = []
     for i in range(len(label_vectors)):
@@ -723,6 +701,61 @@ def get_closest_label_for_image(
 
     top_k_labels = []
     for i in range(top_k):
+        if len(distance_heaps) == 0: break
         cur_distance, index = heapq.heappop(distance_heaps)
         top_k_labels.append((index, cur_distance))
     return top_k_labels
+
+
+def get_closest_image_from_db_for_image(
+    image_id: int,
+    image_features: np.ndarray,
+    model_space_selection: int,
+    top_k: int,
+    dataset,
+) -> list:
+    """
+    Helper function to get closest image from db from image not in DB
+    Currently it runs only resnet, small change can fix that
+    inputs:
+        image_id: user input for image id -> check in place for IndexError: will return None
+        image_features: all image features in DB
+        model_space_selection: parameter to decide which feature space to use -> distances can be mapped to this
+        top_k: list of top k closest values
+        dataset: to get the image PIL from image_id
+    Returns:
+        List of tuples of distances with index, distance to it
+    """
+    img = -1
+    try:
+        img, _ = dataset[image_id]
+    except IndexError:
+        print('Error input was provided')
+        return None
+
+    resnet = resnet_features()
+    
+    resnet.run_model(img)
+    image_vector = resnet.resnet_fc_layer()
+    
+    distance_fn_to_use = distance_function_per_feature_model[model_space_selection]
+    distance_heaps = []
+    
+    for i in range(len(image_features)):
+        cur_distance = distance_fn_to_use(
+            image_vector.flatten(), image_features[i].flatten()
+        )
+        heapq.heappush(distance_heaps, (cur_distance, i))
+
+    top_k_labels = []
+    for i in range(top_k):
+        if len(distance_heaps) == 0: break
+        cur_distance, index = heapq.heappop(distance_heaps)
+        top_k_labels.append((index*2, cur_distance))
+    
+    return top_k_labels
+
+def get_user_input_numeric_common(default_val, variable_name):
+    """Helper function to get the numeric input for variable in question"""
+    print(f"Enter the value for {variable_name}:")
+    return int_input(default_val)

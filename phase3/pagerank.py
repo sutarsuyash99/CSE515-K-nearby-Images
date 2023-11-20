@@ -3,8 +3,25 @@ import networkx as nx
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 
+import distances
 
-def create_graph(label_label_similarity: np.ndarray, connections: int) -> nx.Graph:
+def generate_matrix_cosine_similarity(f1: np.ndarray, f2: np.ndarray) -> np.ndarray:
+    """
+    Function to generate Matrix of distances using selected
+    model space (and corresponding distance)
+    """
+    distance_matrix = np.zeros((f1.shape[0], f2.shape[0]))
+
+    for i in range(f1.shape[0]):
+        for j in range(f2.shape[0]):
+            distance = distances.cosine_similarity(f1[i].flatten(), f2[j].flatten())
+            distance_matrix[i, j] = distance
+
+    # print("Matrix", distance_matrix.shape)
+    # print(distance_matrix)
+    return distance_matrix
+
+def create_graph(label_label_similarity: np.ndarray, connections: int) -> nx.DiGraph:
     B = nx.MultiDiGraph(parallel=True)
 
     B.add_nodes_from(range(label_label_similarity.shape[0]))
@@ -29,27 +46,18 @@ def create_graph(label_label_similarity: np.ndarray, connections: int) -> nx.Gra
     return B
 
 
-def create_stochastic_transition(G: nx.Graph, N: int, connections: int) -> np.ndarray:
+def create_stochastic_transition(G: nx.Graph) -> np.ndarray:
     """
     Takes a graph as input and returns a transition matrix with probabilities for outgoing nodes as output
     """
 
-    number_of_nodes = N
-    connections = connections
-
-    T = np.zeros((number_of_nodes, number_of_nodes))
-    print("Generating a transition matrix from similarity graph....")
-
-    # Get the outgoing nodes for each node from graph and update the values
-    for node in tqdm(G.nodes()):
-        outgoing_edge_nodes = list(G.successors(node))
-        # print(f"Successors of {node} are {outgoing_edge_nodes}")
-
-        for i in outgoing_edge_nodes:
-            T[i][node] = 1 / connections
-
-    # print(T)
-    return T
+    T = nx.adjacency_matrix(G, weight='weight').T
+    # convert T to probablistic ndarray
+    T = T.toarray()
+    den = T.sum(axis=0, keepdims=True)
+    # print('Den has NAN?', np.isnan(den).any())
+    pT = T / den
+    return pT
 
 
 def power_iteration_rank(A: np.ndarray, R: np.ndarray) -> np.ndarray:
@@ -61,7 +69,7 @@ def power_iteration_rank(A: np.ndarray, R: np.ndarray) -> np.ndarray:
     iteration = 1
 
     # Epsilon value for measuring convergence error
-    eps = 1e-9
+    eps = 1e-6
     while True:
         R_last = R
 
@@ -69,12 +77,13 @@ def power_iteration_rank(A: np.ndarray, R: np.ndarray) -> np.ndarray:
         R = A @ R
 
         # Absolute change in all components in R. The maximum of that change, if less than epsilon then convergence is reached.
-        change = np.max(np.abs(R_last - R))
+        change = max(np.max(np.abs(R_last - R)), 1e-14)
 
         # Convergence
         if change < eps:
-            # print(f"Matched on iteration {iteration}")
+            print(f"Matched on iteration {iteration}")
             break
+
         iteration += 1
 
     R = R.flatten()

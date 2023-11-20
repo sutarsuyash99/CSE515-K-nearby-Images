@@ -10,7 +10,8 @@ def ppr_classifier(
     number_cluster: int,
     label_vectors: np.ndarray,
     img_features: np.ndarray,
-    option: int
+    option: int,
+    B: float
 ) -> list:
     """
     PPR based classifier - recommender in disguise
@@ -19,21 +20,16 @@ def ppr_classifier(
     # compute Image-Label scores
     # image_label_sm = utils.generate_image_label_similarity_matrix(5,5)
     # compute Label-label scores
-    label_label_sm = utils.generate_matrix(option, label_vectors, label_vectors)
+    label_label_sm = pagerank.generate_matrix_cosine_similarity(label_vectors, label_vectors)
 
-    # create bipartite graph
     G = pagerank.create_graph(label_label_sm, connections)
     N = len(list(G.nodes()))
-    T = pagerank.create_stochastic_transition(G, N, connections)
-
-    # Damping factor : Probability for random walk and random jump
-    # (1-B) -> Probability of random walk , B -> Probability of random jump or Seed Jump
-    # By convention between 0.8 and 0.9
-    B = 0.45
+    T = pagerank.create_stochastic_transition(G)
 
     # create seed set
-    S = utils.get_closest_label_for_image(label_vectors, img_features, option, 5)
-    print(S)
+    # TODO: try generate seeds using ppr with bipartite graph (weighted pagerank)
+    S = utils.get_closest_label_for_image(label_vectors, img_features, option, 1)
+    # print(S)
 
     # Teleportation matrix : set the probabilities for jumping to seeds instead of random jumps
     # Set to 1/number_of_seeds for the seed image ids, rest are set to 0
@@ -49,6 +45,7 @@ def ppr_classifier(
     R = np.full((N, 1), 1 / N)
     # PPR based random walk - power method
     R = pagerank.power_iteration_rank(A, R)
+    print('sum of R', np.sum(R))
 
     # return 'c' most important labels
     # Sort and return the ids and scores :
