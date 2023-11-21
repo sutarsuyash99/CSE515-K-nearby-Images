@@ -2,7 +2,7 @@ import numpy as np
 
 import pagerank
 import utils
-
+from scipy import stats
 
 # remember to add model_space in param
 def ppr_classifier(
@@ -124,3 +124,72 @@ def ppr_classifier_using_image_image(
     return label_ranking
 
 
+
+
+#Need to add split function to split data if required
+class kNN_classifier :
+
+    VALID_METRIC = ['euclidean','cosine']
+    VALID_ALGORITHM = ['brute']
+
+    def __init__(self, k : int, metric : str,  algorithm : str) :
+        
+        self.k = k
+
+        if metric not in kNN_classifier.VALID_METRIC :
+            raise ValueError(f"Metric not available!")
+        if algorithm not in kNN_classifier.VALID_ALGORITHM :
+            raise ValueError(f"Algorithm not available!")
+        
+        self.metric =  metric
+        self.algorithm = algorithm
+
+
+
+    def kNN_fit(self, data_matrix : np.ndarray, class_matrix : np.ndarray ) :
+
+        '''
+        Loads training data
+        '''
+        if len(data_matrix) != len(class_matrix) :
+            raise ValueError(f"The data and class length don't match")
+        
+        self.data_matrix = data_matrix
+        self.class_matrix = class_matrix
+        print(f"Data and class loaded....")
+
+
+
+    def kNN_predict(self, test_data_matrix : np.ndarray) -> np.ndarray :
+        
+        '''
+        Predicts based on the training data, k, metric and algo and returns predicted class in an array
+        '''
+        self.test_data_matrix = test_data_matrix
+        self.prediction_class_matrix = np.zeros(len(test_data_matrix))
+
+        match self.metric :
+            case 'cosine' :
+
+                #Distance matrix create, Rows : DataMatrix, Columns : TestMatrix
+                self.distance_matrix = utils.cosine_distance_matrix(self.data_matrix, self.test_data_matrix)
+                print(self.distance_matrix.shape)
+            
+            case 'euclidean' :
+
+                #Distance matrix create, Rows : DataMatrix, Columns : TestMatrix
+                self.distance_matrix = utils.euclidean_distance_matrix(self.data_matrix, self.test_data_matrix)
+                print(self.distance_matrix.shape)
+            
+        #Based on k get the closest k ids in the data_matrix for each in the test matrix column wise
+        self.k_smallest_distances_index = np.argsort(self.distance_matrix, axis=0)[:self.k, :]
+        #print(self.k_smallest_distances_index)
+
+        #Based on the k_smallest_distances_index, get class values.
+        self.predicted_class_values = self.class_matrix[self.k_smallest_distances_index]
+        #print(self.predicted_class_values)
+        
+        #Calculate the most frequent class i.e column wise mode
+        self.predictions, _ = stats.mode( self.predicted_class_values, axis=0)
+        
+        return self.predictions

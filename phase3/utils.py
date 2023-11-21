@@ -18,7 +18,7 @@ import heapq
 
 from resnet_50 import resnet_features
 import Mongo.mongo_query_np as mongo_query
-
+from sklearn.preprocessing import StandardScaler,normalize,MinMaxScaler
 # from ordered_set import OrderedSet
 
 pd.set_option("display.max_rows", 30)
@@ -851,6 +851,7 @@ def compute_confusion_matrix(actual : np.ndarray , predicted : np.ndarray, avg_t
     '''
     Creates confusion matrix based on actual [ rows ] and predicted [columns] values
     Returns either confusion matrix or scores [ PRECISION , RECALL, F1, ACCURACY ] depending upon set value
+    Input arrays need to contain integers or floats.
     '''
 
     if len(actual) != len(predicted) :
@@ -866,9 +867,6 @@ def compute_confusion_matrix(actual : np.ndarray , predicted : np.ndarray, avg_t
     
     results = results.astype(int)
     
-
-    ## TEMP : 
-    #results = np.array([[2,0,3,4],[0,4,5,1],[1,0,3,2],[5,0,0,4]])
 
     #Calculating TP,FP,TN,FN form confusion matrix per class 
     if values :
@@ -887,8 +885,6 @@ def compute_confusion_matrix(actual : np.ndarray , predicted : np.ndarray, avg_t
         #https://stackoverflow.com/questions/31345724/scikit-learn-how-to-calculate-the-true-negative
         true_negatives =  results.sum() - false_negatives - false_positives - true_positives
 
-        #print(f"{true_negatives}")
-        #print(f"{true_positives.sum()},{false_positives.sum()}, {false_negatives.sum()}, {true_negatives.sum()}")
 
         match avg_type :
 
