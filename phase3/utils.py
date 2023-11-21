@@ -761,7 +761,7 @@ def get_user_input_numeric_common(default_val, variable_name):
     return int_input(default_val)
 
 
-def get_odd_images_ids(dataset) -> list :
+def get_odd_image_ids(dataset) -> list :
 
     '''
     Returns list of only odd image ids from the dataset
@@ -846,7 +846,7 @@ def MinMax_normalization(data : np.ndarray) -> np.ndarray :
 
 
 
-def compute_confusion_matrix(actual : np.ndarray , predicted : np.ndarray, avg_type : str = None, values : bool = False)  :
+def compute_scores(actual : np.ndarray , predicted : np.ndarray, avg_type : str = None, values : bool = False)  :
 
     '''
     Creates confusion matrix based on actual [ rows ] and predicted [columns] values
@@ -859,31 +859,31 @@ def compute_confusion_matrix(actual : np.ndarray , predicted : np.ndarray, avg_t
 
     #Number of classes
     N = len(np.unique(actual)) 
-    results = np.zeros((N, N))
+    confusion_matrix = np.zeros((N, N))
     
     for i in range(len(actual)):
         #print(f"i : {i} - actual : actual[{i}] - {actual[i]}, predicted : predicted[{i}] - {predicted[i]}")
-        results[int(actual[i])][int(predicted[i])] += 1
+        confusion_matrix[int(actual[i])][int(predicted[i])] += 1
     
-    results = results.astype(int)
+    confusion_matrix = confusion_matrix.astype(int)
     
 
     #Calculating TP,FP,TN,FN form confusion matrix per class 
     if values :
 
         #Same class values that are in diagonal, If the predicted value is positive and the actual value is positive then its true positive 
-        true_positives = results.diagonal()
+        true_positives = confusion_matrix.diagonal()
 
         #Sum of all values per row minus the diagonal values i.e true positives 
-        false_negatives =  results.sum(axis=1) - true_positives
+        false_negatives =  confusion_matrix.sum(axis=1) - true_positives
         
         #Sum of all values per columns minus the diagonal values i.e true positives, If the predicted value is positive and the actual value is negative then its false positive 
-        false_positives = results.sum(axis=0) - true_positives
+        false_positives = confusion_matrix.sum(axis=0) - true_positives
 
 
         # Sum of all values per row and column minus the diagonal values i.e true positives, If the predicted value is negative and the actual value is negative then it's true negative
         #https://stackoverflow.com/questions/31345724/scikit-learn-how-to-calculate-the-true-negative
-        true_negatives =  results.sum() - false_negatives - false_positives - true_positives
+        true_negatives =  confusion_matrix.sum() - false_negatives - false_positives - true_positives
 
 
         match avg_type :
@@ -943,8 +943,8 @@ def compute_confusion_matrix(actual : np.ndarray , predicted : np.ndarray, avg_t
         
         # In binomial i.e only two class accuracy is defined as (TP + TN)/(TP + TN + FP + FN)
         # But for multiclass : Number of correct predictions / Number of predictions made    
-        accuracy =  results.diagonal().sum() / len(actual)
+        accuracy =  confusion_matrix.diagonal().sum() / len(actual)
         return precision, recall, f1, accuracy
 
     #In case values is false provide the confusion matrix itself
-    return results
+    return confusion_matrix
