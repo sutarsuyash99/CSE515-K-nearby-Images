@@ -18,7 +18,7 @@ import heapq
 
 from resnet_50 import resnet_features
 import Mongo.mongo_query_np as mongo_query
-
+from sklearn.preprocessing import StandardScaler,normalize,MinMaxScaler
 # from ordered_set import OrderedSet
 
 pd.set_option("display.max_rows", 30)
@@ -759,3 +759,192 @@ def get_user_input_numeric_common(default_val, variable_name):
     """Helper function to get the numeric input for variable in question"""
     print(f"Enter the value for {variable_name}:")
     return int_input(default_val)
+
+
+def get_odd_image_ids(dataset) -> list :
+
+    '''
+    Returns list of only odd image ids from the dataset
+    '''
+    return [ i for i in range(1,len(dataset),2) ] 
+
+
+def cosine_similarity_matrix( a: np.ndarray, b: np.ndarray ) -> np.ndarray :
+
+    '''
+    Returns a similarity matrix with cosine similarity scores w.r.t. each item in the given matrices.
+    '''
+    norm_a = a / np.linalg.norm(a, axis=1, keepdims=True)
+    norm_b = b / np.linalg.norm(b, axis=1, keepdims=True)
+    return  np.dot(norm_a, norm_b.T)  
+
+
+def cosine_distance_matrix( a: np.ndarray, b: np.ndarray ) -> np.ndarray :
+
+    '''
+    Returns a distance matrix with cosine distance scores w.r.t. each item in the given matrices.
+    '''
+    similarity_matrix = cosine_similarity_matrix(a,b)
+    cosine_distance_matrix = 1 - similarity_matrix
+
+    #Ensuring that diagonals are zero, removing precision errors
+    threshold = 1e-12
+    cosine_distance_matrix[cosine_distance_matrix < threshold] = 0
+    
+    return  cosine_distance_matrix
+
+
+def euclidean_distance_matrix( a: np.ndarray, b: np.ndarray ) -> np.ndarray :
+
+    '''
+    Returns a distance matrix with euclidean distance scores w.r.t. each item in the given matrices.
+    '''
+   
+    #Cannot be used due to space constraints in createing new dimension
+    #return np.linalg.norm(a[:, np.newaxis] - b, axis=-1)
+   
+    squared_euclidean_matrix = -2 * np.dot(a, b.T) + np.sum(a**2, axis=1, keepdims=True) + np.sum(b**2, axis=1, keepdims=True).T
+    
+    #Ensuring that diagonals are zero, removing precision errors
+    squared_euclidean_matrix[squared_euclidean_matrix < 0] = 0
+    threshold = 1e-12
+    squared_euclidean_matrix[squared_euclidean_matrix < threshold] = 0
+
+    #Distance matrix
+    euclidean_distance_matrix = np.sqrt(squared_euclidean_matrix)
+
+    return euclidean_distance_matrix
+
+
+def zscore_normalization(data : np.ndarray) -> np.ndarray :
+
+    '''
+    Returns zscore normalized values for the input matrix 
+    '''
+
+    scaler = StandardScaler()
+    return scaler.fit_transform(data)
+
+
+def l2_normalization(data : np.ndarray) -> np.ndarray :
+
+    '''
+    Returns l2 normalized values for the input matrix 
+    '''
+
+    return normalize(data, norm='l2')
+
+
+def MinMax_normalization(data : np.ndarray) -> np.ndarray :
+
+    '''
+    Returns min max scaler normalized values for the input matrix 
+    '''
+    scaler = MinMaxScaler()
+    return scaler.fit_transform(data)
+
+
+
+
+def compute_scores(actual : np.ndarray , predicted : np.ndarray, avg_type : str = None, values : bool = False)  :
+
+    '''
+    Creates confusion matrix based on actual [ rows ] and predicted [columns] values
+    Returns either confusion matrix or scores [ PRECISION , RECALL, F1, ACCURACY ] depending upon set value
+    Input arrays need to contain integers or floats.
+    '''
+
+    if len(actual) != len(predicted) :
+        raise ValueError(f"Length of actual and predicted values need to be same")
+
+    #Number of classes
+    N = len(np.unique(actual)) 
+    confusion_matrix = np.zeros((N, N))
+    
+    for i in range(len(actual)):
+        #print(f"i : {i} - actual : actual[{i}] - {actual[i]}, predicted : predicted[{i}] - {predicted[i]}")
+        confusion_matrix[int(actual[i])][int(predicted[i])] += 1
+    
+    confusion_matrix = confusion_matrix.astype(int)
+    
+
+    #Calculating TP,FP,TN,FN form confusion matrix per class 
+    if values :
+
+        #Same class values that are in diagonal, If the predicted value is positive and the actual value is positive then its true positive 
+        true_positives = confusion_matrix.diagonal()
+
+        #Sum of all values per row minus the diagonal values i.e true positives 
+        false_negatives =  confusion_matrix.sum(axis=1) - true_positives
+        
+        #Sum of all values per columns minus the diagonal values i.e true positives, If the predicted value is positive and the actual value is negative then its false positive 
+        false_positives = confusion_matrix.sum(axis=0) - true_positives
+
+
+        # Sum of all values per row and column minus the diagonal values i.e true positives, If the predicted value is negative and the actual value is negative then it's true negative
+        #https://stackoverflow.com/questions/31345724/scikit-learn-how-to-calculate-the-true-negative
+        true_negatives =  confusion_matrix.sum() - false_negatives - false_positives - true_positives
+
+
+        match avg_type :
+
+            case  None :
+
+                '''
+                If average type is none calculate precision, f1, recall per class and return an array
+                '''
+                precision = true_positives/(true_positives + false_positives)
+                recall    = true_positives/(true_positives + false_negatives)
+                f1  = 2 * ((precision*recall) / (precision + recall))
+
+                
+            case 'micro' :
+                
+                '''
+                If average type is micro calculate precision, f1, recall globally by adding everything
+                '''
+                precision = true_positives.sum()/(true_positives.sum() + false_positives.sum())
+                recall    = true_positives.sum()/(true_positives.sum() + false_negatives.sum())
+                f1  = 2 * ((precision*recall) / (precision + recall))
+
+
+            case 'macro' :
+                
+                '''
+                If average type is macro calculate precision, f1, recall per class and take unweighted mean
+                '''
+                precision = true_positives/(true_positives + false_positives)
+                recall    = true_positives/(true_positives + false_negatives)
+                f1  = 2 * ((precision*recall) / (precision + recall))
+                
+                precision = precision.sum()/len(precision)
+                recall = recall.sum()/len(recall)
+                f1 =  f1.sum()/len(f1)
+
+            case 'weighted' :
+                
+                '''
+                If average type is weighted calculate precision, f1, recall per class and take weighted mean
+                '''
+
+                
+                #frequency for each label 
+                _ , per_class_frequency = np.unique(actual, return_counts = True)
+
+                #precision same as None i.e for each class 
+                precision_none = true_positives/(true_positives + false_positives)
+                recall_none    = true_positives/(true_positives + false_negatives)
+                f1_none  = 2 * ((precision_none*recall_none) / (precision_none + recall_none))
+
+                precision = np.sum(precision_none * (per_class_frequency / np.sum(per_class_frequency)))
+                recall =  np.sum(recall_none * (per_class_frequency / np.sum(per_class_frequency)))
+                f1 = np.sum(f1_none * (per_class_frequency / np.sum(per_class_frequency)))
+
+        
+        # In binomial i.e only two class accuracy is defined as (TP + TN)/(TP + TN + FP + FN)
+        # But for multiclass : Number of correct predictions / Number of predictions made    
+        accuracy =  confusion_matrix.diagonal().sum() / len(actual)
+        return precision, recall, f1, accuracy
+
+    #In case values is false provide the confusion matrix itself
+    return confusion_matrix

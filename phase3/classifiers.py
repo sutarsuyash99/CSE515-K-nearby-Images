@@ -2,7 +2,7 @@ import numpy as np
 
 import pagerank
 import utils
-
+from scipy import stats
 
 # remember to add model_space in param
 def ppr_classifier(
@@ -124,3 +124,134 @@ def ppr_classifier_using_image_image(
     return label_ranking
 
 
+
+
+#Need to add split function to split data if required
+class kNN_classifier :
+
+    VALID_METRIC = ['euclidean','cosine']
+    VALID_ALGORITHM = ['brute']
+
+    def __init__(self, k : int, metric : str,  algorithm : str) :
+        
+        self.k = k
+
+        if metric not in kNN_classifier.VALID_METRIC :
+            raise ValueError(f"Metric not available!")
+        if algorithm not in kNN_classifier.VALID_ALGORITHM :
+            raise ValueError(f"Algorithm not available!")
+        
+        self.metric =  metric
+        self.algorithm = algorithm
+
+
+
+    def kNN_fit(self, data_matrix : np.ndarray, class_matrix : np.ndarray ) :
+
+        '''
+        Loads training data
+        '''
+        if len(data_matrix) != len(class_matrix) :
+            raise ValueError(f"The data and class length don't match")
+        
+        self.data_matrix = data_matrix
+        self.class_matrix = class_matrix
+        print(f"Data and class loaded....")
+
+
+
+    def kNN_predict(self, test_data_matrix : np.ndarray) -> np.ndarray :
+        
+        '''
+        Predicts based on the training data, k, metric and algo and returns predicted class in an array
+        '''
+        self.test_data_matrix = test_data_matrix
+        self.prediction_class_matrix = np.zeros(len(test_data_matrix))
+
+        match self.metric :
+            case 'cosine' :
+
+                #Distance matrix create, Rows : DataMatrix, Columns : TestMatrix
+                self.distance_matrix = utils.cosine_distance_matrix(self.data_matrix, self.test_data_matrix)
+                #print(self.distance_matrix.shape)
+            
+            case 'euclidean' :
+
+                #Distance matrix create, Rows : DataMatrix, Columns : TestMatrix
+                self.distance_matrix = utils.euclidean_distance_matrix(self.data_matrix, self.test_data_matrix)
+                #print(self.distance_matrix.shape)
+            
+        #Based on k get the closest k ids in the data_matrix for each in the test matrix column wise
+        k_smallest_distances_index = np.argsort(self.distance_matrix, axis=0)[:self.k, :]
+        
+        #Based on the k_smallest_distances_index, get class values.
+        predicted_class_values = self.class_matrix[k_smallest_distances_index]
+        
+        #Calculate the most frequent class i.e column wise mode
+        predictions, _ = stats.mode(predicted_class_values, axis=0)
+        
+        return predictions
+    
+
+    def train_test_split(self, data_matrix : np.ndarray, class_matrix : np.ndarray, train_size : float = None, test_size : float = None, random_state : int = None, stratify : bool = False) -> np.ndarray :
+    
+        '''
+        Splits the data and class arrays into two arrays [train and test ] as per the options.
+        Only train or test size  argument can be set at once. Other is derived.
+        Random State allows randomness with same random seed.
+        Stratify allows to maintain the distribution as per the original data. Usefull for imbalanced data. 
+        '''
+
+        #Check if length of arrays equal 
+        if len(data_matrix) != len(class_matrix) :
+            raise ValueError(f"Data matrix and class matrix need to be of same length")
+
+        #Check if both are set or other options
+        if train_size != None and test_size != None :
+            raise ValueError(f"Can only set train size of test size")
+        elif train_size == None and test_size == None :
+            print(f"Split by default size : Train - 75% and Test - 25%")
+            train_size = 0.75
+            test_size = 1 - train_size
+        elif test_size != None :
+            train_size = 1 - test_size
+        else :    
+            test_size = 1 - train_size
+
+
+        #Get split_size 
+        split_size = int(len(data_matrix) * train_size)
+        '''
+        match case :
+
+            case 0 :
+                
+                #case 0 : random_state and stratify not set 
+                data_train, data_test = data_matrix[:split_size], data_matrix[split_size:]
+                class_train, class_test = class_matrix[:split_size], class_matrix[split_size:]
+
+            case 1 :
+
+                #case 1 : random state is set 
+                #Shuffle and need to set seed so that randomness is deterministic i.e same every time for same data fpr same random state value
+                random_indices = np.random.permutation(len(data_matrix), random_state=random_state)
+
+                
+                train_random_indices = random_indices[:split_size]
+                test_random_indices = random_indices[split_size:]
+                data_train, data_test = data_matrix[train_random_indices], data_matrix[test_random_indices]
+                class_train, class_test =  class_matrix[train_random_indices], class_matrix[test_random_indices]
+            
+            case 2 :
+
+                #case 2 : stratify is set tp true
+                #calculate the number of unique classes and count of each class
+                unique_classes, counts = np.unique(class_matrix, return_counts=True)
+                min_class_count = min(counts)
+
+                #dictionary mapping for each class number of elements
+                train_size_per_class = {}
+                for cls, count in zip(unique_classes, counts):
+                    train_size_per_class[cls] = int(train_size * count)
+        '''
+                
