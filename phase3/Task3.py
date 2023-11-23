@@ -154,7 +154,7 @@ class Task3:
                 precision, recall, f1, accuracy  = utils.compute_scores(odd_image_label_ids, odd_image_predicted_label_ids, avg_type=None, values=True)
                 
                 #Display results
-                utils.print_scores_per_label(self.dataset, precision, recall, f1, accuracy,'mNN')
+                utils.print_scores_per_label(self.dataset, precision, recall, f1, accuracy,'m-NN')
                 while True :
                     user_input = utils.get_user_input_odd_image_id_looped(self.dataset)
                     if user_input == 'x' :

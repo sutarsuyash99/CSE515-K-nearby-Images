@@ -174,7 +174,7 @@ class kNN_classifier :
         if self.k >= len(self.test_data_matrix):
             raise ValueError(f"The number of neighbours cannot be greater than the fitted data")
 
-        print(f"\nPredicting classes using {self.k} neighbours....")
+        print(f"Predicting classes using {self.k} neighbours....")
         match self.metric :
             case 'cosine' :
 
@@ -266,3 +266,39 @@ class kNN_classifier :
         """
 
         return  data_train, data_test, class_train, class_test 
+    
+    @staticmethod
+    def get_optimal_k(k_range : tuple, data_matrix : np.ndarray, class_matrix : np.ndarray, test_data_matrix : np.ndarray, test_class_matrix : np.ndarray, metric : str = 'euclidean',  algorithm : str = 'brute', all_values : bool = False ) :
+
+        '''
+        Tests range of k values to give k with lowest error rate using 'elbow method'
+        Training : data_matrix and class_matrix 
+        Testing : test_data_matrix and test_class_matrix
+        '''
+        error_rates = {}
+        start, end = k_range
+
+        if type(start) != int or type(end) != int or len(k_range) != 2 :
+            raise ValueError(f"The range of k values need to be integer : (start,end)")
+        
+        if start < 1 :
+            raise ValueError(f"Minimum start value of k can be 1")
+        elif end >= len(data_matrix):
+            raise ValueError(f"Maximum end value of k can be less than length of data_matrix")
+        
+        print(f"Trying different k values...")
+        
+        for k in range(start, end + 1) :
+            knn_classifier = kNN_classifier(k, metric, algorithm)
+            knn_classifier.kNN_fit(data_matrix, class_matrix)
+            predicted_class_matrix = knn_classifier.kNN_predict(test_data_matrix)
+            error_rates[k] = np.mean(predicted_class_matrix != test_class_matrix)
+        
+        k_optimal, k_optimal_error_rate = sorted(error_rates.items(), key=lambda item : item[1])[0]
+        
+        #Return entire mapping of k and error rates
+        if all_values :
+            return error_rates
+        
+        #Returns only k and minimum error by default
+        return k_optimal, k_optimal_error_rate
