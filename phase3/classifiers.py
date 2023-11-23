@@ -126,7 +126,6 @@ def ppr_classifier_using_image_image(
 
 
 
-#Need to add split function to split data if required
 class kNN_classifier :
 
     VALID_METRIC = ['euclidean','cosine']
@@ -156,7 +155,7 @@ class kNN_classifier :
         
         self.data_matrix = data_matrix
         self.class_matrix = class_matrix
-        print(f"Data and class loaded....")
+        print(f"\nData and class loaded and trained....")
 
 
 
@@ -168,6 +167,14 @@ class kNN_classifier :
         self.test_data_matrix = test_data_matrix
         self.prediction_class_matrix = np.zeros(len(test_data_matrix))
 
+        #Check if data_matrix is loaded
+        if not hasattr(self, 'data_matrix') or not hasattr(self, 'class_matrix') :
+            raise ValueError(f"Use kNN_fit to load data and then use kNN predict")
+        #Check if number of neighbours asked to compare is valid
+        if self.k >= len(self.test_data_matrix):
+            raise ValueError(f"The number of neighbours cannot be greater than the fitted data")
+
+        print(f"\nPredicting classes using {self.k} neighbours....")
         match self.metric :
             case 'cosine' :
 
@@ -190,9 +197,9 @@ class kNN_classifier :
         #Calculate the most frequent class i.e column wise mode
         predictions, _ = stats.mode(predicted_class_values, axis=0)
         
-        return predictions
+        return predictions.astype(int)
     
-
+    
     def train_test_split(self, data_matrix : np.ndarray, class_matrix : np.ndarray, train_size : float = None, test_size : float = None, random_state : int = None, stratify : bool = False) -> np.ndarray :
     
         '''
@@ -221,37 +228,41 @@ class kNN_classifier :
 
         #Get split_size 
         split_size = int(len(data_matrix) * train_size)
-        '''
-        match case :
+        
+        
+        
 
-            case 0 :
+        if random_state == None and stratify == False :  
                 
-                #case 0 : random_state and stratify not set 
-                data_train, data_test = data_matrix[:split_size], data_matrix[split_size:]
-                class_train, class_test = class_matrix[:split_size], class_matrix[split_size:]
+            #case 0 : random_state and stratify not set 
+            data_train, data_test = data_matrix[:split_size], data_matrix[split_size:]
+            class_train, class_test = class_matrix[:split_size], class_matrix[split_size:]
 
-            case 1 :
+        elif random_state != None and stratify == False :
 
-                #case 1 : random state is set 
-                #Shuffle and need to set seed so that randomness is deterministic i.e same every time for same data fpr same random state value
-                random_indices = np.random.permutation(len(data_matrix), random_state=random_state)
+            #case 1 : random state is set 
+            #Shuffle and need to set seed so that randomness is deterministic i.e same every time for same data fpr same random state value
+            random_indices = np.random.permutation(len(data_matrix), random_state=random_state)
 
                 
-                train_random_indices = random_indices[:split_size]
-                test_random_indices = random_indices[split_size:]
-                data_train, data_test = data_matrix[train_random_indices], data_matrix[test_random_indices]
-                class_train, class_test =  class_matrix[train_random_indices], class_matrix[test_random_indices]
+            train_random_indices = random_indices[:split_size]
+            test_random_indices = random_indices[split_size:]
+            data_train, data_test = data_matrix[train_random_indices], data_matrix[test_random_indices]
+            class_train, class_test =  class_matrix[train_random_indices], class_matrix[test_random_indices]
             
-            case 2 :
+            
+        """
+        #Not required #For later implementation
+        else : 
+            #case 2 : stratify is set tp true
+            #calculate the number of unique classes and count of each class
+            unique_classes, counts = np.unique(class_matrix, return_counts=True)
+            min_class_count = min(counts)
+            #dictionary mapping for each class number of elements
+            train_size_per_class = {}
+            for cls, count in zip(unique_classes, counts):
+                train_size_per_class[cls] = int(train_size * count)
 
-                #case 2 : stratify is set tp true
-                #calculate the number of unique classes and count of each class
-                unique_classes, counts = np.unique(class_matrix, return_counts=True)
-                min_class_count = min(counts)
+        """
 
-                #dictionary mapping for each class number of elements
-                train_size_per_class = {}
-                for cls, count in zip(unique_classes, counts):
-                    train_size_per_class[cls] = int(train_size * count)
-        '''
-                
+        return  data_train, data_test, class_train, class_test 
