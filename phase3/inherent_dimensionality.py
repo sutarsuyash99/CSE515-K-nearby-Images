@@ -15,6 +15,7 @@ def PCA(data):
     for val in range(len(eigenvalues)):
         # PCA where mean is greater than the 
         if eigenvalues[val] < mean:
+            # return val, eigenvectors
             return val
     # return eigenvalues, eigenvectors
 
