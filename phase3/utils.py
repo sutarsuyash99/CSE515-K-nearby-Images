@@ -286,6 +286,31 @@ def get_user_input_label():
     label = int_input(0)
     return label
 
+def get_user_input_odd_image_id_looped(dataset : torchvision.datasets.Caltech101 ) -> int :
+
+    '''
+    Helper function to get odd image id from the user.
+    Loops until it receives 'x' to exit or odd image id present in dataset.
+    Returns either 'x'  or present in dataset.
+    '''
+    while True :
+
+        user_input = input(f"\nEnter 'x' to exit or odd image id to get predicted label : ")
+        if user_input.lower() == 'x' :
+            return 'x'
+        
+        if user_input.isdigit():
+            user_input = int(user_input)
+            if user_input % 2 == 0:
+                print("Enter a valid odd image id.")
+            elif user_input > len(dataset):
+                print("Image id not in the dataset. Enter a valid odd image id.")
+            else:
+                return user_input
+        else :
+            print(f"Enter a valid odd image id.") 
+
+
 
 def get_user_selection_classifier():
     """This is a helper code which prints all the available classifiers code and take input from user"""
@@ -633,6 +658,32 @@ def get_label_vectors(ls_option: int) -> np.ndarray:
     return label_space
 
 
+def get_odd_image_feature_vectors(feature_model : str ) -> np.ndarray :
+
+    '''
+    Helper function to get odd image feature vectors
+    Currently supports fc layer only 
+    '''
+    match feature_model :
+
+        case 'fc_layer' :
+            feature_path = 'fc_layer_vectors.pkl'
+    
+    
+    if not os.path.isfile(feature_path) :
+        print(f"Generate RESNET FC features for odd images...")
+        return None
+    else :
+        odd_images = torch.load(feature_path)
+        odd_image_vectors = np.vstack([i for index,i in enumerate(odd_images.values()) if index % 2 != 0])
+        
+    
+    return odd_image_vectors
+
+
+
+
+
 def generate_image_similarity_matrix_from_db(
     feature_model: str, fs_option: int
 ) -> np.ndarray:
@@ -948,3 +999,27 @@ def compute_scores(actual : np.ndarray , predicted : np.ndarray, avg_type : str 
 
     #In case values is false provide the confusion matrix itself
     return confusion_matrix
+
+
+def print_scores_per_label(dataset : torchvision.datasets.Caltech101, precision : np.ndarray, recall : np.ndarray, f1 : np.ndarray, accuracy : float, name : str) -> None :
+
+    '''
+    Prints the score report for every label i.e precision, recall, f1  as well as accuracy score for the classifier.
+    Input : precision, recall, f1 arrays labelwise, accuracy score [ Output of compute score ] and classifier name.
+    Output : None
+    '''
+    spacing = '\t'
+    print(f"\n\n{spacing} Classification score report for model : {name} {spacing}\n")
+
+    print(f"{spacing} Accuracy : {accuracy}  /  {accuracy*100:.2f} %  {spacing}\n")
+
+    #Constructing DataFrame containing label id , label name, precision, recall, f1 scores 
+    data = []
+    for i in range(len(precision)) :
+        data.append([ i , name_for_label_index(dataset, i), precision[i], recall[i], f1[i] ])
+    
+    header = [ 'Label ID', 'Label Name', 'Precision', 'Recall', 'F1']
+    df = pd.DataFrame(data, columns=header)
+
+    pd.set_option('display.max_rows', None)
+    print(df.to_string(index=False, col_space=10))
