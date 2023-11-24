@@ -15,8 +15,8 @@ def PCA(data):
     for val in range(len(eigenvalues)):
         # PCA where mean is greater than the 
         if eigenvalues[val] < mean:
-            return val, eigenvectors
-            # return val
+            # return val, eigenvectors
+            return val
     # return eigenvalues, eigenvectors
 
 def mds(X, N, learning_rate = 0.1, num_iterations = 50):
