@@ -580,3 +580,25 @@ def generate_matrix_from_image_weight_pairs(data : np.ndarray , fs_option : int 
 
          
     return distance_matrix
+
+def read_file(filename):
+    featureDesc = torch.load(filename)
+    return featureDesc
+
+def get_data_to_store(file_data, labelled_data):
+    data = []
+    for imageid in file_data:
+        if(imageid % 2 != 0):
+            map = {
+                "imageID": imageid,
+                "label": labelled_data[imageid] or "unknown",
+                "feature_descriptor": file_data[imageid].tolist()
+            }
+            data.append(map)  
+    return data
+
+def get_odd_iamges(model, labelled_data):
+    # TODO: if PKL file is not present, compute it then and there
+    file_data = read_file(model+"_vectors.pkl")
+    data = get_data_to_store(file_data, labelled_data)
+    return data

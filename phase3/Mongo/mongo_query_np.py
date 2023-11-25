@@ -15,6 +15,11 @@ def get_all_feature_descriptor_for_label(collection_name, label_name):
         feature_descriptors.append(np.array(feature_descriptor))
     return np.array(feature_descriptors)
 
+def get_label_names(collection_name):
+    collection = get_collection(collection_name)
+    all_vector = collection.find({})
+    return 
+
 # Function to get all feature descriptors in numpy array for a given collection name
 def get_all_feature_descriptor(collection_name):
     collection  = get_collection(collection_name)
