@@ -9,3 +9,4 @@ others/
 **/.DS_Store
 data
 **/feature_descriptors
+phase3/feature_generator.py

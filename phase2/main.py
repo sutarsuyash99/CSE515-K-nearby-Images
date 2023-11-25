@@ -51,7 +51,7 @@ def task3_main():
     Task3 = task3()
     Task3.k_latent_semantics()
 
-
+# /Users/suyashsutar99/Downloads/ImportantDoc.jpg
 def task4_main():
     Task4 = task4()
     Task4.LS2_cp_decompose()
