@@ -1022,7 +1022,7 @@ def print_scores_per_label(dataset : torchvision.datasets.Caltech101, precision 
     df = pd.DataFrame(data, columns=header)
     pd.set_option('display.max_rows', None)
     print(df.to_string(index=False, col_space=10))    
-    return distance_matrix
+
 
 def read_file(filename):
     featureDesc = torch.load(filename)
