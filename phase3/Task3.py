@@ -66,39 +66,10 @@ class Task3:
                 print(f"The predicted label for image id - {user_input} is : {predicted_label}")
 
     def tree_init(self):
-        pass
+        classifiers.tree_init()
     
     def ppr_init(self):
         classifiers.ppr_init()
-        # image_vectors = mongo_query.get_all_feature_descriptor(
-        #     utils.feature_model[option]
-        # )
-
-        # # create image-image similarity score matrix
-        # # create label-label similarity score matrix
-
-        # # Load Image vectors - take image input
-        # imgId = utils.get_user_input_image_id()
-        # input_image_vector = mongo_query.get_feature_descriptor(
-        #     utils.feature_model[option], imgId
-        # )
-
-        # if input_image_vector is None:
-        #     print(f"Image not in DB: {imgId}")
-
-        #     top_k = utils.get_closest_image_from_db_for_image(
-        #         imgId, image_vectors, option, 1, self.dataset
-        #     )
-        #     closest_index = top_k[0][0]
-        #     input_image_vector = mongo_query.get_feature_descriptor(
-        #         utils.feature_model[option], closest_index
-        #     )
-        #     print(
-        #         f"Closest image index: {closest_index} with feature shape: {input_image_vector.shape}"
-        #     )
-
-        # res = self.ppr_classifier(number_clusters, option, label_vectors, input_image_vector, B)
-        # self.print_labels(res)
 
     def ppr_classifier(
         self,
@@ -138,12 +109,9 @@ class Task3:
             case 1: 
                 self.knn_init()
             case 2:
-                pass
+                self.tree_init()
             case 3:
                 self.ppr_init()
-                # res = task3.ppr_classifier_img_img(
-                #     number_clusters, option, image_vectors, imgId, label_vectors
-                # )
 
 
 if __name__ == "__main__":

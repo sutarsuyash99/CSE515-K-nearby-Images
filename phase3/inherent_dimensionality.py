@@ -1,5 +1,7 @@
 import numpy as np
+
 import distances as d
+import utils
 
 
 # All code related to inherent dimensionality here...
@@ -96,3 +98,48 @@ def mds(X, N, learning_rate = 0.1, num_iterations = 50):
         Y = np.hstack((Y, random_column))
     
     return Y
+
+def nmf_als(V, K, iteration=200, tol=1, alpha=0.01):
+    """
+    Non-negative Matrix Factorization (NMF) using Alternating Least Squares (ALS) method.
+
+    Parameters:
+        V (numpy.ndarray): The input data matrix of shape (m, ...).
+        K (int): Desired number of latent semantics
+        max_iter (int): Maximum number of iterations.
+        tol (float): Tolerance to stop the iterations.
+        alpha (float): Regularization parameter.
+
+    Returns:
+        W (numpy.ndarray): The factorization matrix of shape (m, rank).
+        H (numpy.ndarray): The factorization matrix of shape (rank, n).
+    """
+    # convert higher dims to 2d
+    V = utils.convert_higher_dims_to_2d(V)
+
+    # Shape of the original vector
+    m, n = V.shape
+
+    # normalise here to [0-1]
+    V = utils.MinMax_normalization(V)
+
+    # Initialize W and H with random non-negative values
+    np.random.seed(0)
+    W = np.random.rand(m, K)
+    H = np.random.rand(K, n)
+
+    for iter in range(iteration):
+        # Update H 
+        H = H * (np.dot(W.T, V)) / (np.dot(np.dot(W.T, W), H))
+        # Update W 
+        W = W * (np.dot(V, H.T) ) / (np.dot(W, np.dot(H, H.T)) )
+
+        # Error or distance from the original matrix , NMF for very large matrix have distance > 300
+        residual = np.square(np.linalg.norm(V - np.dot(W, H)))
+        
+
+        # Check for convergence
+        if residual < tol:
+            break
+    print(residual)
+    return W, H

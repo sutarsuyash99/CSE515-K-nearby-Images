@@ -71,11 +71,11 @@ class Pagerank:
         precision, recall, f1, accuracy  = utils.compute_scores(self.odd_image_label_ids, odd_label_ids, avg_type=None, values=True)
         
         #Display results
-        utils.print_scores_per_label(self.dataset, precision, recall, f1, accuracy,'m-NN')
+        utils.print_scores_per_label(self.dataset, precision, recall, f1, accuracy,'PPR based classifier')
 
     def load_image_vectors_and_label_data(
         self,
-    ) -> (np.ndarray, np.ndarray, np.ndarray, np.ndarray):
+    ) -> (np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray):
         even_image_vectors = mongo_query.get_all_feature_descriptor(
             utils.feature_model[self.option]
         )

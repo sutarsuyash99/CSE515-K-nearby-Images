@@ -680,9 +680,23 @@ def get_odd_image_feature_vectors(feature_model : str ) -> np.ndarray :
     
     return odd_image_vectors
 
+def get_all_image_feature_vectors(feature_model : str ) -> np.ndarray:
+    '''
+    Helper function to get odd image feature vectors
+    Currently supports fc layer only 
+    '''
+    match feature_model :
+        case 'fc_layer' :
+            feature_path = 'fc_layer_vectors.pkl'
 
-
-
+    if not os.path.isfile(feature_path) :
+        print(f"Generate RESNET FC features for odd images...")
+        return None
+    else :
+        images = torch.load(feature_path)
+        image_vectors = np.vstack([i for index,i in enumerate(images.values())])
+        
+    return image_vectors
 
 def generate_image_similarity_matrix_from_db(
     feature_model: str, fs_option: int
