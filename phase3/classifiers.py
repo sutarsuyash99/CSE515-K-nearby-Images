@@ -4,6 +4,10 @@ import pagerank
 import utils
 from scipy import stats
 
+def ppr_init():
+    ppr = pagerank.Pagerank()
+    ppr.start_ppr()
+
 # remember to add model_space in param
 def ppr_classifier(
     connections: int,

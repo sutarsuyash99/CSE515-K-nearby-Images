@@ -69,45 +69,36 @@ class Task3:
         pass
     
     def ppr_init(self):
-        # Assumption: The model runs with fc_layer
-        option = 5
+        classifiers.ppr_init()
+        # image_vectors = mongo_query.get_all_feature_descriptor(
+        #     utils.feature_model[option]
+        # )
 
-        # Load label vectors
-        label_vectors = mongo_query.get_label_feature_descriptor(
-            utils.label_feature_model[option]
-        )
-        image_vectors = mongo_query.get_all_feature_descriptor(
-            utils.feature_model[option]
-        )
+        # # create image-image similarity score matrix
+        # # create label-label similarity score matrix
 
-        # Load Image vectors - take image input
-        imgId = utils.get_user_input_image_id()
-        input_image_vector = mongo_query.get_feature_descriptor(
-            utils.feature_model[option], imgId
-        )
+        # # Load Image vectors - take image input
+        # imgId = utils.get_user_input_image_id()
+        # input_image_vector = mongo_query.get_feature_descriptor(
+        #     utils.feature_model[option], imgId
+        # )
 
-        if input_image_vector is None:
-            print(f"Image not in DB: {imgId}")
+        # if input_image_vector is None:
+        #     print(f"Image not in DB: {imgId}")
 
-            top_k = utils.get_closest_image_from_db_for_image(
-                imgId, image_vectors, option, 1, self.dataset
-            )
-            closest_index = top_k[0][0]
-            input_image_vector = mongo_query.get_feature_descriptor(
-                utils.feature_model[option], closest_index
-            )
-            print(
-                f"Closest image index: {closest_index} with feature shape: {input_image_vector.shape}"
-            )
+        #     top_k = utils.get_closest_image_from_db_for_image(
+        #         imgId, image_vectors, option, 1, self.dataset
+        #     )
+        #     closest_index = top_k[0][0]
+        #     input_image_vector = mongo_query.get_feature_descriptor(
+        #         utils.feature_model[option], closest_index
+        #     )
+        #     print(
+        #         f"Closest image index: {closest_index} with feature shape: {input_image_vector.shape}"
+        #     )
 
-        number_clusters = utils.get_user_input_numeric_common(10, "Top m")
-        # Damping factor : Probability for random walk and random jump
-        # (1-B) -> Probability of random walk , B -> Probability of random jump or Seed Jump
-        # By convention between 0.8 and 0.9
-        B = utils.get_user_input_numeric_common(0.15, "damping factor")
-
-        res = self.ppr_classifier(number_clusters, option, label_vectors, input_image_vector, B)
-        self.print_labels(res)
+        # res = self.ppr_classifier(number_clusters, option, label_vectors, input_image_vector, B)
+        # self.print_labels(res)
 
     def ppr_classifier(
         self,
@@ -120,31 +111,6 @@ class Task3:
         connections = 2
         id_rank = classifiers.ppr_classifier(
             connections, number_clusters, label_vectors, input_image_vector, option, B
-        )
-
-        name_rank = [
-            (utils.name_for_label_index(self.dataset, i[0]), i[1]) for i in id_rank
-        ]
-        return name_rank
-
-    def ppr_classifier_img_img(
-        self,
-        number_clusters: int,
-        option: int,
-        image_vectors: np.ndarray,
-        img_id: int,
-        label_vectors: np.ndarray,
-    ) -> list:
-        connections = 5
-        id_rank = classifiers.ppr_classifier_using_image_image(
-            connections,
-            number_clusters,
-            image_vectors,
-            img_id,
-            option,
-            self.dataset,
-            self.labelled_images,
-            label_vectors,
         )
 
         name_rank = [
