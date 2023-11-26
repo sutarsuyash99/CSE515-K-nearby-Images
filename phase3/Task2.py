@@ -1,21 +1,19 @@
 import numpy as np
-import hdbscan
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.manifold import MDS
 import matplotlib.pyplot as plt
 import Mongo.mongo_query_np as query
 import numpy as np
-from sklearn.cluster import DBSCAN
 from sklearn.manifold import MDS
 import matplotlib.pyplot as plt
 import utils
 import distances
-from scipy.spatial.distance import pdist, squareform
-import cProfile
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 import torch
 from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
 from tqdm import tqdm
+import DBScan
+import inherent_dimensionality
 
 class Task2():
     def __init__(self) -> None:
@@ -29,7 +27,7 @@ class Task2():
         self.grouped_data = {}
         self.grouped_data_original_imageId = {}
         self.number_of_clusters = 0
-        self.min_eps=0.0001
+        self.min_eps=0.00001
         self.max_eps=40
         self.min_neighbours = 2
         self.max_neighbours = 6
@@ -44,35 +42,47 @@ class Task2():
             # data.append(item['feature_descriptor'])
             self.grouped_data.setdefault(label, []).append(item['feature_descriptor'])
             self.grouped_data_original_imageId.setdefault(label, []).append(item['imageID'])
-            
 
     def dbscan_logic(self, min_eps=None, max_eps=None, neighbours=None, image_vectors=None, label=None):
         mid = round((min_eps + max_eps) / 2, 4)
         diff = round(max_eps - min_eps, 4)
         found = False
-        if(min_eps < max_eps and (diff > 0.1)):
-            dbscan = DBSCAN(eps=mid, min_samples=neighbours)
-            clusters = dbscan.fit(image_vectors)
-            unique, counts = np.unique(clusters.labels_, return_counts=True)
-            
+        if(min_eps < max_eps and (diff > 0.001)):
+            labels, core_points = DBScan.fast_db_scan(image_vectors, neighbours, mid)
+            unique, counts = np.unique(labels, return_counts=True)
+
             if len(unique) == self.number_of_clusters+1:
                 print(f"{label}: {mid} : {neighbours}: {len(unique)}")
                 # Best cluster criteria = minimum number of outliers i.e min of counts of 0th index
+                clusters = {}
+                clusters["core_sample_indices_"] = core_points
+                clusters["labels_"] = labels
+                components = [image_vectors[i] for i in core_points]
+                clusters["components_"] = components
+
                 return clusters, mid, True
             
             if len(unique) > self.highest_clusters_formed_till_now:
                 self.highest_clusters_formed_till_now = len(unique)
+                clusters = {}
+                clusters["core_sample_indices_"] = core_points
+                clusters["labels_"] = labels
+                components = [image_vectors[i] for i in core_points]
+                clusters["components_"] = components
                 self.best_clusters = clusters
                 self.eps = mid
                 self.neighbours = neighbours
-
-            result, epsilon, found = self.dbscan_logic(mid, max_eps, neighbours, image_vectors, label)
-            if found:
-                return result, epsilon, found
             
-            result, epsilon, found = self.dbscan_logic(min_eps, mid, neighbours, image_vectors, label)
-            if found:
-                return result, epsilon, found
+            # look in the higher values of eps
+            if len(unique) > self.number_of_clusters+1:
+                result, epsilon, found = self.dbscan_logic(mid, max_eps, neighbours, image_vectors, label)
+                if found:
+                    return result, epsilon, found
+            elif len(unique) < self.number_of_clusters+1:
+                # look in the lower values of eps
+                result, epsilon, found = self.dbscan_logic(min_eps, mid, neighbours, image_vectors, label)
+                if found:
+                    return result, epsilon, found
         
         return self.best_clusters,self.best_eps,False
 
@@ -82,12 +92,17 @@ class Task2():
         self.number_of_clusters = c
 
     def mds_call(self, data):
-        mds = MDS(n_components=2)
-        data_2d = mds.fit_transform(data)
+        # mds = MDS(n_components=2, random_state=0)
+        # data_2d = mds.fit_transform(data)
+        # print(data_2d.shape)
+        # print(f"type of data_2d = {type(data_2d)}")
+        data = np.array(data)
+        data_2d = inherent_dimensionality.mds(data, 2, 0.001, 300)
+        print(data_2d.shape)
+        # print(f"type of data_2d = {type(data_2d)}")
         return data_2d
 
-    def visualize_clusters(self, data, labels, title):
-        data_2d = self.mds_call(data)
+    def visualize_clusters(self, data_2d, labels, title):
 
         unique_labels = np.unique(labels)
 
@@ -98,10 +113,10 @@ class Task2():
 
         plt.title(title)
         plt.legend()
+        plt.tight_layout()
         plt.show()
 
-    def visualize_thumbnails(self, label_vectors, labels, original_image_ids):
-        data_2d = self.mds_call(label_vectors)
+    def visualize_thumbnails(self, data_2d, labels, original_image_ids):
         # actual_indices = [x * 2 for x in original_image_ids]
         pil_images = []
         fig, ax = plt.subplots()
@@ -112,9 +127,11 @@ class Task2():
         unique_labels = unique_labels[unique_labels != -1]
         for label in unique_labels:
             cluster_points = data_2d[labels == label]
-
+            # print(type(cluster_points))
             for point, image in zip(cluster_points, pil_images):
                 imagebox = OffsetImage(image, zoom=0.1)  # Adjust the zoom factor as needed
+                # print(point)
+                # print(type(point))
                 ab = AnnotationBbox(imagebox, point, frameon=False, pad=0)
                 ax.add_artist(ab)
             
@@ -124,10 +141,9 @@ class Task2():
         # Adjust x and y axes accordingly
         plt.xlim(x_min - 1, x_max + 1)
         plt.ylim(y_min - 1, y_max + 1)
-
+        plt.tight_layout()
         ax.set_title('Image Thumbnails in Scatter Plot')
         plt.show()
-        # print(original_image_ids)
 
     def write_to_file(self):
         file_name = 'clusters_data.pkl'
@@ -143,9 +159,9 @@ class Task2():
             
             if found_combination:
                 self.combined_clusters[selected_label] = {
-                    "core_components_": clusters.components_,
-                    "core_sample_indices": clusters.core_sample_indices_,
-                    "labels": clusters.labels_,
+                    "core_components_": clusters["components_"],
+                    "core_sample_indices": clusters["core_sample_indices_"],
+                    "labels": clusters["labels_"],
                     "original_image_ids": original_image_ids,
                     "eps": eps,
                     "neighbours": neighbours
@@ -155,9 +171,9 @@ class Task2():
 
         if not found_combination:
             self.combined_clusters[selected_label] = {
-                "core_components_": self.best_clusters.components_,
-                "core_sample_indices": self.best_clusters.core_sample_indices_,
-                "labels": self.best_clusters.labels_,
+                "core_components_": self.best_clusters["components_"],
+                "core_sample_indices": self.best_clusters["core_sample_indices_"],
+                "labels": self.best_clusters["labels_"],
                 "original_image_ids": original_image_ids,
                 "eps": self.eps,
                 "neighbours": self.neighbours
@@ -165,19 +181,13 @@ class Task2():
 
         print(f"label = {selected_label}: total_clusters formed = {self.highest_clusters_formed_till_now}")
         # Print Cluster distribution
-        unique, counts = np.unique(self.best_clusters.labels_, return_counts=True)
+        unique, counts = np.unique(self.best_clusters["labels_"], return_counts=True)
         print(unique)
         print(counts)
         self.best_clusters = None
         self.eps = None
         self.neighbours = 0
         self.highest_clusters_formed_till_now = 0
-        
-        # Plot the graph
-        # self.visualize_clusters(label_vectors, self.combined_clusters[selected_label]["labels"], selected_label)
-        # plot the thumbnails
-        # print(self.combined_clusters[selected_label])
-        # self.visualize_thumbnails(label_vectors, self.combined_clusters[selected_label]["labels"], self.combined_clusters[selected_label]["original_image_ids"])
 
     def specific_label(self):
         label_number = utils.get_user_input_label()
@@ -189,14 +199,49 @@ class Task2():
         original_image_ids = self.grouped_data_original_imageId[selected_label]
         self.process_individual_label(label_vectors, original_image_ids, selected_label)
 
+    def visualization_options(self):
+        choice = -1
+        
+        while choice != 2:
+            print('\
+                \n\n\
+                \n 1. Choose a label to visualize it \
+                \n 2. Return to main menu \
+                \n\n')
+        
+            choice = utils.int_input()
+            file_data = utils.read_file("clusters_data.pkl")
+
+            match choice:
+                case 1:
+                    label_number = utils.get_user_input_label()
+                    selected_label = self.labels[label_number]
+
+                    label_vectors = self.grouped_data[selected_label]
+                    data_2d = self.mds_call(label_vectors)
+                    if len(self.combined_clusters.keys()) > 0:
+                        # Plot the graph
+                        plt1 = self.visualize_clusters(data_2d, self.combined_clusters[selected_label]["labels"], selected_label)
+                        # plot the thumbnails
+                        plt2 = self.visualize_thumbnails(data_2d, self.combined_clusters[selected_label]["labels"], self.combined_clusters[selected_label]["original_image_ids"])
+                    else:
+                        # Plot the graph
+                        self.visualize_clusters(data_2d, file_data[selected_label]["labels"], selected_label)
+                        # plot the thumbnails
+                        self.visualize_thumbnails(data_2d, file_data[selected_label]["labels"], file_data[selected_label]["original_image_ids"])
+                    
+                case 2:
+                    return
+    
     def show_all(self):
         ''' process all '''
-        # self.get_number_of_clusters()
+        self.get_number_of_clusters()
         for label, image_vectors in self.grouped_data.items():
             original_image_ids = self.grouped_data_original_imageId[label]
             self.process_individual_label(image_vectors, original_image_ids, label)
-
+            
         self.write_to_file()
+        self.visualization_options()
 
     def read_file(self):
         file_data = torch.load("clusters_data.pkl")
@@ -212,7 +257,7 @@ class Task2():
         for odd_image in tqdm(self.odd_images, desc="Processing Odd Images", unit="image"):
             closest_distance = None
             closest_label = None
-            true_labels_odd.append(odd_image["label"])
+            true_labels_odd.append(odd_image["label"].lower())
             for label, value in file_data.items():
                 image = odd_image["feature_descriptor"]
                 for vector in value["core_components_"]:
@@ -220,38 +265,46 @@ class Task2():
                     if closest_distance is None or distance < closest_distance:
                         closest_distance = distance
                         closest_label = label
-            predicted_labels_odd.append(closest_label)
+            predicted_labels_odd.append(closest_label.lower())
 
-        print(true_labels_odd)
-        print(predicted_labels_odd)
+        true_labels_odd_id = []
+        predicted_labels_odd_id = []
+        label_map = {}
+        for idx, label in enumerate(self.labels):
+            label_map[label.lower()] = idx
+        print(label_map)
+        for true_label in true_labels_odd:
+            true_labels_odd_id.append(label_map[true_label])
 
-        precision = precision_score(true_labels_odd, predicted_labels_odd, average='weighted')
-        recall = recall_score(true_labels_odd, predicted_labels_odd, average='weighted')
-        f1 = f1_score(true_labels_odd, predicted_labels_odd, average='weighted')
-        accuracy = accuracy_score(true_labels_odd, predicted_labels_odd)
-
-        print(f"precision = {precision}")
-        print(f"recall = {recall}")
-        print(f"f1 = {f1}")
-        print(f"accuracy = {accuracy}")
-            
+        for predicted_label in predicted_labels_odd:
+            predicted_labels_odd_id.append(label_map[predicted_label])
+        
+        true_labels_odd_id = np.array(true_labels_odd_id)
+        predicted_labels_odd_id = np.array(predicted_labels_odd_id)
+        #Test 
+        precision, recall, f1, accuracy  = utils.compute_scores(true_labels_odd_id, predicted_labels_odd_id, avg_type=None, values=True)
+        print(len(precision))
+        #Display results
+        utils.print_scores_per_label(self.dataset, precision, recall, f1, accuracy,'m-NN')
 
 
     def execute(self):
-        self.get_number_of_clusters()
-        print("-"*25, 'MENU', '-'*25)
-        print('Select your option:\
-            \n\n\
-            \n 1. Select Specific Label\
-            \n 2. Process All Labels \
-            \n 3. Predict Labels \
-            \n\n')
-        
-        option = utils.int_input()
-        match option:
-            case 1: self.specific_label()
-            case 2: self.show_all()
-            case 3: self.predict_labels()
+        option = -1
+        while option != 4:
+            print("-"*25, 'MENU', '-'*25)
+            print('Select your option:\
+                \n\n\
+                \n 1. Create Clusters for all labels \
+                \n 2. Predict Labels \
+                \n 3. Visualize only \
+                \n 4. Exit \
+                \n\n')
+            
+            option = utils.int_input()
+            match option:
+                case 1: self.show_all()
+                case 2: self.predict_labels()
+                case 3: self.visualization_options()
 
 
 task2 = Task2()
