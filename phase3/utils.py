@@ -19,6 +19,7 @@ import heapq
 from resnet_50 import resnet_features
 import Mongo.mongo_query_np as mongo_query
 from sklearn.preprocessing import StandardScaler,normalize,MinMaxScaler
+from k_mediods import kmedoids
 # from ordered_set import OrderedSet
 
 pd.set_option("display.max_rows", 30)
@@ -524,6 +525,31 @@ def convert_image_to_grayscale(image):
     return cv2_image
 
 
+def label_fv_kmediods(label_features : np.ndarray):
+
+    """
+    create label feature vector using the kmediods value of the contained data
+    return that feature vector
+    """
+    try:
+        #label_features = get_all_feature_descriptor_for_label(dbName, label)
+        label_features = convert_higher_dims_to_2d(label_features)
+        kmedoids_object = kmedoids()
+        kmedoids_centroids = kmedoids_object.fit(label_features)
+        # kmedoids_centroids = KMedoids(n_clusters=1).fit(label_features).cluster_centers_
+        # print(kmedoids.shape, type(kmedoids))
+        return kmedoids_centroids
+    except KeyError:
+        return None
+
+
+
+
+
+
+
+
+
 def compute_distance_query_image_top_k(
     k: int,
     labelled_feature_vectors: dict,
@@ -906,7 +932,10 @@ def compute_scores(actual : np.ndarray , predicted : np.ndarray, avg_type : str 
     '''
 
     if len(actual) != len(predicted) :
+        #print(len(actual))
+        #print(len(predicted))
         raise ValueError(f"Length of actual and predicted values need to be same")
+  
 
     #Number of classes
     N = len(np.unique(actual)) 
@@ -936,65 +965,65 @@ def compute_scores(actual : np.ndarray , predicted : np.ndarray, avg_type : str 
         #https://stackoverflow.com/questions/31345724/scikit-learn-how-to-calculate-the-true-negative
         true_negatives =  confusion_matrix.sum() - false_negatives - false_positives - true_positives
 
+        with np.errstate(divide='ignore', invalid='ignore') :
+            match avg_type :
 
-        match avg_type :
+                case  None :
 
-            case  None :
-
-                '''
-                If average type is none calculate precision, f1, recall per class and return an array
-                '''
-                precision = true_positives/(true_positives + false_positives)
-                recall    = true_positives/(true_positives + false_negatives)
-                f1  = 2 * ((precision*recall) / (precision + recall))
-
-                
-            case 'micro' :
-                
-                '''
-                If average type is micro calculate precision, f1, recall globally by adding everything
-                '''
-                precision = true_positives.sum()/(true_positives.sum() + false_positives.sum())
-                recall    = true_positives.sum()/(true_positives.sum() + false_negatives.sum())
-                f1  = 2 * ((precision*recall) / (precision + recall))
+                    '''
+                    If average type is none calculate precision, f1, recall per class and return an array
+                    '''
+                    precision = true_positives/(true_positives + false_positives)
+                    recall    = true_positives/(true_positives + false_negatives)
+                    f1  = 2 * ((precision*recall) / (precision + recall))
 
 
-            case 'macro' :
-                
-                '''
-                If average type is macro calculate precision, f1, recall per class and take unweighted mean
-                '''
-                precision = true_positives/(true_positives + false_positives)
-                recall    = true_positives/(true_positives + false_negatives)
-                f1  = 2 * ((precision*recall) / (precision + recall))
-                
-                precision = precision.sum()/len(precision)
-                recall = recall.sum()/len(recall)
-                f1 =  f1.sum()/len(f1)
+                case 'micro' :
 
-            case 'weighted' :
-                
-                '''
-                If average type is weighted calculate precision, f1, recall per class and take weighted mean
-                '''
+                    '''
+                    If average type is micro calculate precision, f1, recall globally by adding everything
+                    '''
+                    precision = true_positives.sum()/(true_positives.sum() + false_positives.sum())
+                    recall    = true_positives.sum()/(true_positives.sum() + false_negatives.sum())
+                    f1  = 2 * ((precision*recall) / (precision + recall))
 
-                
-                #frequency for each label 
-                _ , per_class_frequency = np.unique(actual, return_counts = True)
 
-                #precision same as None i.e for each class 
-                precision_none = true_positives/(true_positives + false_positives)
-                recall_none    = true_positives/(true_positives + false_negatives)
-                f1_none  = 2 * ((precision_none*recall_none) / (precision_none + recall_none))
+                case 'macro' :
 
-                precision = np.sum(precision_none * (per_class_frequency / np.sum(per_class_frequency)))
-                recall =  np.sum(recall_none * (per_class_frequency / np.sum(per_class_frequency)))
-                f1 = np.sum(f1_none * (per_class_frequency / np.sum(per_class_frequency)))
+                    '''
+                    If average type is macro calculate precision, f1, recall per class and take unweighted mean
+                    '''
+                    precision = true_positives/(true_positives + false_positives)
+                    recall    = true_positives/(true_positives + false_negatives)
+                    f1  = 2 * ((precision*recall) / (precision + recall))
 
-        
-        # In binomial i.e only two class accuracy is defined as (TP + TN)/(TP + TN + FP + FN)
-        # But for multiclass : Number of correct predictions / Number of predictions made    
-        accuracy =  confusion_matrix.diagonal().sum() / len(actual)
+                    precision = precision.sum()/len(precision)
+                    recall = recall.sum()/len(recall)
+                    f1 =  f1.sum()/len(f1)
+
+                case 'weighted' :
+
+                    '''
+                    If average type is weighted calculate precision, f1, recall per class and take weighted mean
+                    '''
+
+
+                    #frequency for each label 
+                    _ , per_class_frequency = np.unique(actual, return_counts = True)
+
+                    #precision same as None i.e for each class 
+                    precision_none = true_positives/(true_positives + false_positives)
+                    recall_none    = true_positives/(true_positives + false_negatives)
+                    f1_none  = 2 * ((precision_none*recall_none) / (precision_none + recall_none))
+
+                    precision = np.sum(precision_none * (per_class_frequency / np.sum(per_class_frequency)))
+                    recall =  np.sum(recall_none * (per_class_frequency / np.sum(per_class_frequency)))
+                    f1 = np.sum(f1_none * (per_class_frequency / np.sum(per_class_frequency)))
+
+
+            # In binomial i.e only two class accuracy is defined as (TP + TN)/(TP + TN + FP + FN)
+            # But for multiclass : Number of correct predictions / Number of predictions made    
+            accuracy =  confusion_matrix.diagonal().sum() / len(actual)
         return precision, recall, f1, accuracy
 
     #In case values is false provide the confusion matrix itself
