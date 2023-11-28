@@ -1,5 +1,7 @@
 import numpy as np
+
 import distances as d
+import utils
 
 
 # All code related to inherent dimensionality here...

@@ -2,7 +2,16 @@ import numpy as np
 
 import pagerank
 import utils
+import decisiontree
 from scipy import stats
+
+def ppr_init():
+    ppr = pagerank.Pagerank()
+    ppr.start_ppr()
+
+def tree_init():
+    dt = decisiontree.DecisionTree()
+    dt.start_dt()
 
 # remember to add model_space in param
 def ppr_classifier(
