@@ -1,33 +1,62 @@
 import numpy as np
+import os
+import torch
 
 import utils
 import Mongo.mongo_query_np as mongo_query
-import inherent_dimensionality
+import dimension_reduction
 
 
 class DecisionTree:
     def __init__(self) -> None:
         self.option = 5
 
+        # Assumptions
+        self.max_depth = 150
+
         # Load odd, even image and features
         self.dataset, self.labelled_images = utils.initialise_project()
-        self.image_vectors, self.image_label_ids = self.load_all_image_vectors()
-        if self.image_vectors is None:
-            print("There is undefined error")
-            return
+        # self.image_vectors, self.image_label_ids = self.load_all_image_vectors()
+
+        # if self.image_vectors is None:
+        #     print("There is undefined error")
+        #     return
+        # (
+        #     self.train_vectors,
+        #     self.test_vectors,
+        #     self.train_target,
+        #     self.test_target,
+        # ) = self.split_data_into_train_test(self.image_vectors, self.image_label_ids)
         (
             self.train_vectors,
-            self.test_vectors,
             self.train_target,
+            self.test_vectors,
             self.test_target,
-        ) = self.split_data_into_train_test(self.image_vectors, self.image_label_ids)
+        ) = self.get_split_train_test_data()
 
     def start_dt(self):
-        clf = DecisionTreeClassifier(max_depth=30)
-        clf.fit(self.train_vectors, self.train_target)
-
-        # TODO: pandas predicted value comes out to Nan and is zero
+        decisionTreePath = (
+            "decisionTree_"
+            + str(self.max_depth)
+            + ".pkl"
+        )
+        clf = None
+        if not os.path.isfile(decisionTreePath):
+            print(
+                "No existing model was found with the exact params...\n\
+                \nCreating one right now"
+            )
+            clf = DecisionTreeClassifier(max_depth=self.max_depth)
+            clf.fit(self.train_vectors, self.train_target)
+            torch.save(clf, decisionTreePath)
+        else:
+            print("Pre-existing model was found, using that")
+            clf = torch.load(decisionTreePath)
+        if clf is None:
+            print("Encountered Error")
+            return
         test_predicted_ids = clf.predict(self.test_vectors)
+        print(f"The maximum depth is: {clf.max_depth}")
 
         # for i in range(len(test_predicted_ids)):
         #     print(f'Actual {self.test_target[i]} vs Predicted {test_predicted_ids[i]}')
@@ -39,6 +68,37 @@ class DecisionTree:
         # Display results
         utils.print_scores_per_label(
             self.dataset, precision, recall, f1, accuracy, "Decision Tree classifier"
+        )
+
+    def get_split_train_test_data(
+        self,
+    ) -> (np.ndarray, np.ndarray, np.ndarray, np.ndarray):
+        even_vectors = mongo_query.get_all_feature_descriptor(utils.feature_model[5])
+        # U, sigma, VT = dimension_reduction.svd(
+        #     even_vectors, self.dimensionsToReduce
+        # )
+        # reduced_even_vectors = np.dot(even_vectors, VT.T)
+
+        odd_vectors = utils.get_odd_image_feature_vectors("fc_layer")
+        # reduced_odd_vectors = np.dot(odd_vectors, VT.T)/sigma
+        # print(reduced_even_vectors.shape, reduced_odd_vectors.shape)
+
+        even_image_label_ids, odd_image_label_ids = [], []
+        for i in range(len(self.dataset)):
+            _, label = self.dataset[i]
+            if i % 2 == 0:
+                even_image_label_ids.append(label)
+            else:
+                odd_image_label_ids.append(label)
+
+        even_image_label_ids = np.asarray(even_image_label_ids, dtype=int)
+        odd_image_label_ids = np.asarray(odd_image_label_ids, dtype=int)
+
+        return (
+            even_vectors,
+            even_image_label_ids,
+            odd_vectors,
+            odd_image_label_ids,
         )
 
     def load_all_image_vectors(
@@ -55,7 +115,9 @@ class DecisionTree:
             image_label_ids[i] = int(label)
 
         # reduce image_vectors to reduced dimensions
-        image_vectors, _ = inherent_dimensionality.nmf_als(image_vectors, 20)
+        image_vectors, _ = dimension_reduction.nmf_als(
+            image_vectors, self.dimensionsToReduce
+        )
 
         return image_vectors, image_label_ids
 
