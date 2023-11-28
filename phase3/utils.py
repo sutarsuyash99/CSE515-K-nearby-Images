@@ -75,6 +75,14 @@ def int_input(default_value: int = 99) -> int:
         print(f"No proper value was passed, Default value of {default_value} was used")
         return default_value
 
+def float_input(default_value: float = 0.15) -> int:
+    try:
+        inpu = float(input())
+        return inpu
+    except ValueError:
+        print(f"No proper value was passed, Default value of {default_value} was used")
+        return default_value
+
 
 def convert_higher_dims_to_2d(data_collection: np.ndarray) -> np.ndarray:
     """
@@ -706,9 +714,23 @@ def get_odd_image_feature_vectors(feature_model : str ) -> np.ndarray :
     
     return odd_image_vectors
 
+def get_all_image_feature_vectors(feature_model : str ) -> np.ndarray:
+    '''
+    Helper function to get odd image feature vectors
+    Currently supports fc layer only 
+    '''
+    match feature_model :
+        case 'fc_layer' :
+            feature_path = 'fc_layer_vectors.pkl'
 
-
-
+    if not os.path.isfile(feature_path) :
+        print(f"Generate RESNET FC features for odd images...")
+        return None
+    else :
+        images = torch.load(feature_path)
+        image_vectors = np.vstack([i for index,i in enumerate(images.values())])
+        
+    return image_vectors
 
 def generate_image_similarity_matrix_from_db(
     feature_model: str, fs_option: int
@@ -837,6 +859,10 @@ def get_user_input_numeric_common(default_val, variable_name):
     print(f"Enter the value for {variable_name}:")
     return int_input(default_val)
 
+def get_user_input_numeric_common_float(default_val, variable_name):
+    """Helper function to get the numeric float input for variable in question"""
+    print(f"Enter the value for {variable_name}:")
+    return float_input(default_val)
 
 def get_odd_image_ids(dataset) -> list :
 
