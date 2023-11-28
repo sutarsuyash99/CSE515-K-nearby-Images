@@ -4,7 +4,6 @@ import Mongo.mongo_query_np as mongo
 import dimension_reduction as dr
 import torch 
 import os
-import scipy
 
 
 class Task1() :
@@ -51,7 +50,7 @@ class Task1() :
         return label_representives
 
 
-    def get_image_vectors_by_label(self, even_image_vectors : np.ndarray = None, even_image_label_ids : np.ndarray = None ) -> np.ndarray :
+    def get_image_vectors_by_label(self, even_image_vectors : np.ndarray = None, even_image_label_ids : np.ndarray = None ) -> list :
 
         '''
         Get image vectors by label
@@ -102,14 +101,16 @@ class Task1() :
         return  testing_data_transformed
 
 
-    def get_predictions(self, label_matrix : np.ndarray, odd_image_matrix : np.ndarray) -> np.ndarray :
+    def get_predictions(self, label_matrix : np.ndarray, odd_image_matrix : np.ndarray, metric : str) -> np.ndarray :
 
         '''
         Calculating distances and predicting labels
         '''
         print(f"Calculating distances...\n")
-
-        distance_matrix = utils.euclidean_distance_matrix(label_matrix, odd_image_matrix)
+        if metric == 'euclidean' :
+            distance_matrix = utils.euclidean_distance_matrix(label_matrix, odd_image_matrix)
+        elif metric == 'cosine' :
+            distance_matrix = utils.cosine_distance_matrix(label_matrix, odd_image_matrix)
 
         odd_image_predicted_label_ids = np.argmin(distance_matrix, axis=0)
         return odd_image_predicted_label_ids
@@ -128,15 +129,15 @@ class Task1() :
         utils.print_scores_per_label(self.dataset, precision, recall, f1, accuracy,'Task 1')
 
 
-
-    def runTask1(self, case : int = 2) :
+    def runTask1(self, case : int, k=False) :
 
         '''
         Main task function.
         '''
         
         print(f"\nEnter the value of k for obtaining latent semantics : ")
-        k = utils.int_input()
+        if not k :
+            k = utils.int_input()
 
         #option 5 fc layer 
         self.option = 5
@@ -149,13 +150,14 @@ class Task1() :
                 '''
                 Get label vectors from even images, create latent semantics, transform odd images and classify according to label vectors and transformed odd images
                 '''
+
                 label_representives_transformed = self.fit_transform(k, label_representives)
                 odd_image_vectors_transformed = self.transform(odd_image_vectors)
 
             case 2 :
 
                 '''
-                Get even image vectors, create latent sematics, transform odd images, create label vectors, classify according to label vectors and transformed odd images
+                Get even image vectors, create latent sematics, create label vectors, transform odd images,  classify according to label vectors and transformed odd images
                 '''
                 even_image_vectors_transformed = self.fit_transform(k,even_image_vectors)
                 odd_image_vectors_transformed = self.transform(odd_image_vectors)
@@ -163,18 +165,10 @@ class Task1() :
                 label_representives_transformed = self.get_label_wise_latent_semantic_representives(even_image_vectors_by_label)
                 label_representives_transformed = np.vstack(label_representives_transformed)
 
-            case 3 :
-
-                '''
-                PLACEHOLDER FOR ANY NEW SOLUTION 
-                '''
-                label_representives_transformed = self.fit_transform(k, label_representives)
-                odd_image_vectors_transformed = self.transform(odd_image_vectors)
-
-
-        odd_image_label_ids_predicted = self.get_predictions(label_representives_transformed, odd_image_vectors_transformed)
+        
+        odd_image_label_ids_predicted = self.get_predictions(label_representives_transformed, odd_image_vectors_transformed, 'euclidean')
         self.test_and_print(odd_image_label_ids, odd_image_label_ids_predicted)
-
+    
         ### DISPLAY PREDICTED LABEL PROMPT ###
         map_odd_image_id_predicted_label = {(index*2)+1 : label_id for index, label_id in enumerate(odd_image_label_ids_predicted)}
 
@@ -186,8 +180,11 @@ class Task1() :
                 predicted_label_id = map_odd_image_id_predicted_label[user_input]
                 predicted_label = self.dataset.categories[predicted_label_id]
                 print(f"The predicted label for image id - {user_input} is : {predicted_label}")
+                utils.display_image_and_labels(self.dataset, user_input, predicted_label)
 
-
+            
 if __name__ == '__main__':
     task1 = Task1()
-    task1.runTask1()
+    task1.runTask1(2)
+
+    
