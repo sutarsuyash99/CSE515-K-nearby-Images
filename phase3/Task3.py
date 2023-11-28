@@ -64,7 +64,8 @@ class Task3:
                 predicted_label_id = map_odd_image_id_predicted_label[user_input]
                 predicted_label = self.dataset.categories[predicted_label_id]
                 print(f"The predicted label for image id - {user_input} is : {predicted_label}")
-
+                utils.display_image_and_labels(self.dataset, user_input, predicted_label)
+                
     def tree_init(self):
         classifiers.tree_init()
     

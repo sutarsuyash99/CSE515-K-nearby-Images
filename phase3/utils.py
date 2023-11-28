@@ -237,6 +237,35 @@ def display_k_images_subplots(
     # pyplot.title(title)
     pyplot.show()
 
+def display_image_and_labels(dataset: datasets.Caltech101, image_id : int , predicted_label) :
+
+    '''
+    Helper function that displays the 
+    Input : dataset, image_id and predicted label.
+    Output : Displays the image from dataset, Image ID as title, Predicted label name and Original Label name
+    '''
+
+    image, _ , label_name = img_label_and_named_label_for_query_int(dataset, image_id)
+
+    if type(predicted_label) == str :
+        text = f"Predicted Label : {predicted_label}   Original Label : {label_name}"
+    elif type(predicted_label) == int or type(predicted_label) == float :
+        text = f"Predicted Label : {name_for_label_index(predicted_label)}   Original Label : {label_name}"
+    #Display the image
+    _ , ax = pyplot.subplots()
+    ax.imshow(image)
+            
+    #Add text below the image
+    pyplot.text(0.5, -0.1, text, ha='center', va='center', transform=ax.transAxes,
+                         fontsize=12, color='black')
+    #Title 
+    title = f"Image ID : {image_id}"
+    pyplot.title(title, fontsize=12, color='black', backgroundcolor='white', pad=10, fontweight='bold')
+                
+    pyplot.axis('off')
+    pyplot.show(block=False)
+            
+
 
 def get_user_selected_feature_model():
     """This is a helper code which prints all the available fearure options and takes input from the user"""
