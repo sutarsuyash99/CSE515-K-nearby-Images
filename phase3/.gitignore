@@ -13,4 +13,3 @@ test*
 phase2/
 models/
 pyvenv.cfg
-!fc_layer_vectors.pkl
