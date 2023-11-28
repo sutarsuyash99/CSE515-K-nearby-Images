@@ -15,7 +15,7 @@ from tqdm import tqdm
 import DBScan
 import inherent_dimensionality
 
-class Task2():
+class Task2_reduced():
     def __init__(self) -> None:
         ''' Using FC Layer Feature descriptors for this '''
         self.feature_model = "fc_layer"
@@ -26,6 +26,7 @@ class Task2():
         self.dataset,_  = utils.initialise_project()
         self.grouped_data = {}
         self.grouped_data_original_imageId = {}
+        self.principal_components = None
         self.number_of_clusters = 0
         self.min_eps=0.00001
         self.max_eps=40
@@ -36,11 +37,11 @@ class Task2():
         self.best_eps = None
         self.highest_clusters_formed_till_now = 0
         self.neighbours = 0
-        self.min_outliers_count = 5000
-        # data = []
+        self.data = []
+        self.reduced_data = {}
         for item in self.feature_descriptors:
             label = item['label']
-            # data.append(item['feature_descriptor'])
+            self.data.append(item['feature_descriptor'])
             self.grouped_data.setdefault(label, []).append(item['feature_descriptor'])
             self.grouped_data_original_imageId.setdefault(label, []).append(item['imageID'])
 
@@ -51,7 +52,7 @@ class Task2():
         if(min_eps < max_eps and (diff > 0.001)):
             labels, core_points = DBScan.fast_db_scan(image_vectors, neighbours, mid)
             unique, counts = np.unique(labels, return_counts=True)
-            current_outliers = 0 if unique[0] == -1 else counts[0]
+
             if len(unique) == self.number_of_clusters+1:
                 print(f"{label}: {mid} : {neighbours}: {len(unique)}")
                 # Best cluster criteria = minimum number of outliers i.e min of counts of 0th index
@@ -63,8 +64,7 @@ class Task2():
 
                 return clusters, mid, True
             
-            if len(unique) >= self.highest_clusters_formed_till_now:
-                # if current_outliers <= self.min_outliers_count:
+            if len(unique) > self.highest_clusters_formed_till_now:
                 self.highest_clusters_formed_till_now = len(unique)
                 clusters = {}
                 clusters["core_sample_indices_"] = core_points
@@ -74,23 +74,18 @@ class Task2():
                 self.best_clusters = clusters
                 self.eps = mid
                 self.neighbours = neighbours
-                self.min_outliers_count = current_outliers
             
+            # look in the higher values of eps
             if len(unique) > self.number_of_clusters+1:
-                # number of cluster created are higher than required, that means, eps is too small
-                # look in the higher values of eps
-                # print("increase eps")
                 result, epsilon, found = self.dbscan_logic(mid, max_eps, neighbours, image_vectors, label)
                 if found:
                     return result, epsilon, found
             elif len(unique) < self.number_of_clusters+1:
-                # number of cluster created are lower than required, that means, eps is too high
                 # look in the lower values of eps
-                # print("decrease eps")
                 result, epsilon, found = self.dbscan_logic(min_eps, mid, neighbours, image_vectors, label)
                 if found:
                     return result, epsilon, found
-
+        
         return self.best_clusters,self.best_eps,False
 
     def get_number_of_clusters(self):
@@ -105,7 +100,7 @@ class Task2():
         # print(f"type of data_2d = {type(data_2d)}")
         data = np.array(data)
         data_2d = inherent_dimensionality.mds(data, 2, 0.001, 300)
-        # print(data_2d.shape)
+        print(data_2d.shape)
         # print(f"type of data_2d = {type(data_2d)}")
         return data_2d
 
@@ -162,9 +157,8 @@ class Task2():
         neighbours = self.min_neighbours
         self.best_clusters = None
         while neighbours < self.max_neighbours and not found_combination:
-            # print(f"neighbours = {neighbours}")
             clusters, eps, found_combination = self.dbscan_logic(self.min_eps, self.max_eps, neighbours, label_vectors, selected_label)
-            # print(f"found_combination = {found_combination}")
+            
             if found_combination:
                 print(f"label = {selected_label}: eps = {eps} total_clusters formed = {self.number_of_clusters + 1}")
                 unique, counts = np.unique(clusters["labels_"], return_counts=True)
@@ -200,6 +194,15 @@ class Task2():
         self.neighbours = 0
         self.highest_clusters_formed_till_now = 0
 
+    def specific_label(self):
+        label_number = utils.get_user_input_label()
+        selected_label = self.labels[label_number]
+        
+        # self.get_number_of_clusters()
+
+        label_vectors = self.grouped_data[selected_label]
+        original_image_ids = self.grouped_data_original_imageId[selected_label]
+        self.process_individual_label(label_vectors, original_image_ids, selected_label)
 
     def visualization_options(self):
         choice = -1
@@ -219,7 +222,7 @@ class Task2():
                     label_number = utils.get_user_input_label()
                     selected_label = self.labels[label_number]
 
-                    label_vectors = self.grouped_data[selected_label]
+                    label_vectors = self.reduced_data[selected_label]
                     data_2d = self.mds_call(label_vectors)
                     if len(self.combined_clusters.keys()) > 0:
                         # Plot the graph
@@ -237,10 +240,15 @@ class Task2():
     
     def show_all(self):
         ''' process all '''
+        ''' Do Dimensionality reduction on odd images entire data first'''
+        _, self.principal_components = inherent_dimensionality.PCA(self.data)
+
         self.get_number_of_clusters()
         for label, image_vectors in self.grouped_data.items():
             original_image_ids = self.grouped_data_original_imageId[label]
-            self.process_individual_label(image_vectors, original_image_ids, label)
+            reduced_data = np.dot(image_vectors, self.principal_components)
+            self.reduced_data[label] = reduced_data
+            self.process_individual_label(reduced_data, original_image_ids, label)
             
         self.write_to_file()
         self.visualization_options()
@@ -263,11 +271,12 @@ class Task2():
             for label, value in file_data.items():
                 image = odd_image["feature_descriptor"]
                 image = np.array(image)
+                reduced_odd_image = np.dot(image, self.principal_components)
                 eps = value["eps"]
                 for vector in value["core_components_"]:
                     vector = np.array(vector)
-                    distance = distances.euclidean_distance(vector, image)
-                    # If closest is not set or current is less than closest, as well as distance must be less than eps
+                    distance = distances.euclidean_distance(vector, reduced_odd_image)
+                    # If closest not set or current is less than closest, as well as distance must be less than eps
                     if distance < eps and (closest_distance is None or distance < closest_distance):
                         closest_distance = distance
                         closest_label = label
@@ -286,8 +295,10 @@ class Task2():
         # Remove corresponding values from true_labels_odd
         true_labels_odd = [val for i, val in enumerate(true_labels_odd) if i not in none_indexes]
 
+
         for idx, label in enumerate(self.labels):
-            label_map[label] = idx  
+            label_map[label] = idx
+        
         for true_label in true_labels_odd:
             true_labels_odd_id.append(label_map[true_label])
 
@@ -296,6 +307,7 @@ class Task2():
         
         true_labels_odd_id = np.array(true_labels_odd_id)
         predicted_labels_odd_id = np.array(predicted_labels_odd_id)
+
         #Test 
         precision, recall, f1, accuracy  = utils.compute_scores(true_labels_odd_id, predicted_labels_odd_id, avg_type=None, values=True)
         print(len(precision))
@@ -323,7 +335,7 @@ class Task2():
                 case 3: self.visualization_options()
 
 
-task2 = Task2()
+task2 = Task2_reduced()
 task2.execute()
 # if __name__ == "__init__":
 #     task2 = Task2()
