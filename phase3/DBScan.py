@@ -76,13 +76,16 @@ class FastDBSCAN:
         self.labels = None
         self.visited = set()
         self.data = None
+        # create a distance matrix for compute and save all the distances at the start of algorithm only
         self.distance_matrix = None
         #Core Points
         self.core_points = []
 
     def fit(self, data):
         self.data = np.array(data)
+        # mark all data as outlier initially
         self.labels = np.full(len(data), fill_value=-1, dtype=int)
+        # precaution
         self.visited.clear()
         self.distance_matrix = self.compute_distance_matrix()
 
@@ -92,10 +95,14 @@ class FastDBSCAN:
             if point_id not in self.visited:
                 self.visited.add(point_id)
                 neighbors = self.find_neighbors(point_id)
-
+                # print(len(neighbors))
+                # Points will keep getting marked as noise 
+                # till we reach a point where this criteria is met, 
+                # then from there on out we expand the cluster
                 if len(neighbors) < self.min_samples:
                     self.labels[point_id] = -1  # Mark as noise
                 else:
+                    # assign it to new cluster
                     cluster_id += 1
                     #Core Points
                     self.core_points.append(point_id)
@@ -106,7 +113,7 @@ class FastDBSCAN:
     def expand_cluster(self, point_id, neighbors, cluster_id, core_points):
         self.labels[point_id] = cluster_id
         neighbors_queue = deque(neighbors)
-
+        # Visit Each of the neighbours identified above
         while neighbors_queue:
             current_point_id = neighbors_queue.popleft()
             if current_point_id not in self.visited:
@@ -125,7 +132,16 @@ class FastDBSCAN:
         return np.where(self.distance_matrix[point_id] < self.eps)[0]
 
     def compute_distance_matrix(self):
-        return np.linalg.norm(self.data[:, np.newaxis] - self.data, axis=2)
+        data = np.array(self.data)
+        num_points = len(data)
+        distance_matrix = np.zeros((num_points, num_points))
+
+        for i in range(num_points):
+            for j in range(num_points):
+                if i != j:
+                    distance_matrix[i, j] = ds.euclidean_distance(data[i], data[j])
+
+        return distance_matrix
 
 
 def fast_db_scan(data, min_samples, eps):
