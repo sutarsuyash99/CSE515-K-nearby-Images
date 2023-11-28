@@ -1,16 +1,11 @@
 import numpy as np
 from sklearn.metrics.pairwise import euclidean_distances
-from sklearn.manifold import MDS
 import matplotlib.pyplot as plt
 import Mongo.mongo_query_np as query
-import numpy as np
-from sklearn.manifold import MDS
-import matplotlib.pyplot as plt
 import utils
 import distances
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 import torch
-from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
 from tqdm import tqdm
 import DBScan
 import inherent_dimensionality
@@ -98,13 +93,13 @@ class Task2():
         c = utils.int_input()
         self.number_of_clusters = c
 
-    def mds_call(self, data):
+    def mds_call(self, label, data):
         # mds = MDS(n_components=2, random_state=0)
         # data_2d = mds.fit_transform(data)
         # print(data_2d.shape)
         # print(f"type of data_2d = {type(data_2d)}")
         data = np.array(data)
-        data_2d = inherent_dimensionality.mds(data, 2, 0.001, 300)
+        data_2d = inherent_dimensionality.mds(label, data, 2)
         # print(data_2d.shape)
         # print(f"type of data_2d = {type(data_2d)}")
         return data_2d
@@ -220,7 +215,7 @@ class Task2():
                     selected_label = self.labels[label_number]
 
                     label_vectors = self.grouped_data[selected_label]
-                    data_2d = self.mds_call(label_vectors)
+                    data_2d = self.mds_call(selected_label, label_vectors)
                     if len(self.combined_clusters.keys()) > 0:
                         # Plot the graph
                         plt1 = self.visualize_clusters(data_2d, self.combined_clusters[selected_label]["labels"], selected_label)
