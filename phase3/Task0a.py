@@ -10,7 +10,7 @@ class Task0a:
         # Load all data
         all_feature_vectors = mongo_query.get_all_feature_descriptor(model_option)
         # call functions -- call here in the below format
-        k = inherent_dimensionality.PCA(all_feature_vectors)
+        k, _ = inherent_dimensionality.PCA(all_feature_vectors)
         # print inherent dimensionality
         print(f"Inherent Dimensionality for all feature vectors: {k}")
 

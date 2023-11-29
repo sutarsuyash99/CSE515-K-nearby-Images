@@ -18,7 +18,7 @@ def PCA(data):
         # PCA where mean is greater than the 
         if eigenvalues[val] < mean:
             # return val, eigenvectors
-            return val
+            return val, eigenvectors[:, :val]
     # return eigenvalues, eigenvectors
 
 def mds(X, N, learning_rate = 0.1, num_iterations = 50):
@@ -88,7 +88,7 @@ def mds(X, N, learning_rate = 0.1, num_iterations = 50):
     max_stress = 0
     Y = np.random.rand(n, 1)
     stress = float('inf')
-    for dimension in range(1, N + 1):
+    for dimension in range(1, N):
         Y, stress = gradient_descent(Y, distances, learning_rate, num_iterations, stress)
         if dimension == 1:
             max_stress = stress
