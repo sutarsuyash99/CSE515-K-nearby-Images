@@ -86,7 +86,7 @@ class Task4b:
         self.data_matrix = mongo_query_np.get_all_feature_descriptor("fc_layer")
         
 
-    def runTask4b(self, imageID = None, query_vector = None):
+    def runTask4b(self, imageID = None, query_vector = []):
         print("*"*25 + " Task 4b "+ "*"*25)
 
         file_hashcode = "hash_codes.pkl"
@@ -102,7 +102,7 @@ class Task4b:
         with open(file_divisor, 'rb') as file:
             divisor = pickle.load(file)
 
-        if query_vector == None or imageID == None:
+        if len(query_vector) == 0 or imageID == None:
             imageID = utils.get_user_input_image_id()
             img, _ = self.dataset[imageID]
             run_model = resnet.run_model(img)
@@ -116,7 +116,7 @@ class Task4b:
         print("Indices of images: ", sorted(neighbouring_index))
         print("Please enter the number of relevant images (T):")
         k = utils.int_input(10)
-        similar_images = self.knn(imageID, k, neighbouring_index)
+        similar_images = self.knn(query_vector, imageID, k, neighbouring_index)
         data = {
             'query_image': imageID,
             'neighbour_images': list(neighbouring_index),
@@ -127,7 +127,10 @@ class Task4b:
 
         with open('4b_output.json', 'w') as json_file:
             json_file.write(json_data)
+            json_file.flush()
         utils.display_k_images_subplots(self.dataset, similar_images, f"{k} most relevant images using LSH index structure")
+
+        return query_vector
     
 
     def generate_hash_code(self, imageID, query_vector, hyperplanes, divisor):
@@ -202,7 +205,7 @@ class Task4b:
 
         return neighbouring_index
 
-    def knn(self, img, k, neighbouring_index):
+    def knn(self, query_vector,img, k, neighbouring_index):
     
         lsh_set = []
         for i in neighbouring_index:
@@ -212,7 +215,7 @@ class Task4b:
         distances = []
         for i, data_point in enumerate(self.data_matrix):
             if i in lsh_set:
-                distance = d.cosine_distance(self.data_matrix[img], data_point)
+                distance = d.cosine_distance(query_vector, data_point)
                 distances.append((i, distance))
         
         distances.sort(key=lambda x: x[1])
