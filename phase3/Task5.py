@@ -60,7 +60,7 @@ class Task5:
         # # Compute the new query vector
         # new_query = alpha * query_vector + beta * rel_centroid - 0.5 * non_rel_centroid
         # return new_query
-        beta = 0.1
+        beta = 0.15
         image_mean = np.mean(image_vectors, axis=0)
 
         image_vectors = (image_vectors > image_mean).astype(int)
@@ -82,7 +82,6 @@ class Task5:
         # print(np.where(numer > 1), np.where(numer == 0 ), np.where(numer == 1))
         dday = np.log(numer/denom)
         final = query_vector + beta*dday
-        print(final)
         return final
 
     def svm_feedback_system(self,feedback, image_vectors, query_vector ):
@@ -209,7 +208,7 @@ if __name__ == "__main__":
         new_vector = task5.run_feedback(query_vector)
         task4 = Task4.Task4b()
         query_vector = task4.runTask4b(imageID = task_4b["query_image"], query_vector = new_vector)
-        exit_condition = input("To exit press 0 else 1 -  ")
+        exit_condition = input("To exit Relevance Feedback press 0 to Give further feedback press 1 -  ")
         if exit_condition.lower() == '0':
             break
 
