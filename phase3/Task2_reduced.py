@@ -46,9 +46,12 @@ class Task2_reduced():
         if(min_eps < max_eps and (diff > 0.001)):
             labels, core_points = DBScan.fast_db_scan(image_vectors, neighbours, mid)
             unique, counts = np.unique(labels, return_counts=True)
+            outlier_present = True if unique[0] == -1 else False
 
-            if len(unique) == self.number_of_clusters+1:
-                print(f"{label}: {mid} : {neighbours}: {len(unique)}")
+            desired_cluster_count = self.number_of_clusters + 1 if outlier_present else self.number_of_clusters
+
+            if len(unique) == desired_cluster_count:
+                # print(f"{label}: {mid} : {neighbours}: {len(unique)}")
                 # Best cluster criteria = minimum number of outliers i.e min of counts of 0th index
                 clusters = {}
                 clusters["core_sample_indices_"] = core_points
@@ -70,11 +73,11 @@ class Task2_reduced():
                 self.neighbours = neighbours
             
             # look in the higher values of eps
-            if len(unique) > self.number_of_clusters+1:
+            if len(unique) > desired_cluster_count:
                 result, epsilon, found = self.dbscan_logic(mid, max_eps, neighbours, image_vectors, label)
                 if found:
                     return result, epsilon, found
-            elif len(unique) < self.number_of_clusters+1:
+            elif len(unique) < desired_cluster_count:
                 # look in the lower values of eps
                 result, epsilon, found = self.dbscan_logic(min_eps, mid, neighbours, image_vectors, label)
                 if found:
@@ -83,7 +86,7 @@ class Task2_reduced():
         return self.best_clusters,self.best_eps,False
 
     def get_number_of_clusters(self):
-        print('\tEnter Number of Cluseters (c) : ')
+        print('\t Enter Number of Cluseters (c) : ')
         c = utils.int_input()
         self.number_of_clusters = c
 
@@ -154,8 +157,8 @@ class Task2_reduced():
             clusters, eps, found_combination = self.dbscan_logic(self.min_eps, self.max_eps, neighbours, label_vectors, selected_label)
             
             if found_combination:
-                print(f"label = {selected_label}: eps = {eps} total_clusters formed = {self.number_of_clusters + 1}")
                 unique, counts = np.unique(clusters["labels_"], return_counts=True)
+                print(f"label = {selected_label}: eps = {eps} neighbours = {neighbours} total_clusters formed = {len(unique)}")
                 print(unique)
                 print(counts)
                 self.combined_clusters[selected_label] = {
@@ -170,8 +173,8 @@ class Task2_reduced():
             neighbours += 1
 
         if not found_combination:
-            print(f"label = {selected_label}: eps = {self.eps} total_clusters formed = {self.highest_clusters_formed_till_now}")
             unique, counts = np.unique(self.best_clusters["labels_"], return_counts=True)
+            print(f"label = {selected_label}: eps = {self.eps} neighbours = {self.neighbours} total_clusters formed = {len(unique)}")
             print(unique)
             print(counts)
             self.combined_clusters[selected_label] = {
