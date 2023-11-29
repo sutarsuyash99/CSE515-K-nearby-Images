@@ -103,7 +103,8 @@ class Task2():
         # print(data_2d.shape)
         # print(f"type of data_2d = {type(data_2d)}")
         data = np.array(data)
-        data_2d = inherent_dimensionality.mds(label, data, 2)
+        # data_2d = inherent_dimensionality.mds(label, data, 2)
+        data_2d = inherent_dimensionality.classical_mds(data, 2)
         # print(data_2d.shape)
         # print(f"type of data_2d = {type(data_2d)}")
         return data_2d
