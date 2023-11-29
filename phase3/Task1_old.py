@@ -6,184 +6,236 @@ import torch
 import os
 
 
-def get_image_vectors_and_label_ids(feature_model : str) -> np.ndarray :
-
-    even_image_vectors = mongo.get_all_feature_descriptor(feature_model)
-    even_image_vectors = utils.convert_higher_dims_to_2d(even_image_vectors)
-
-    even_image_label_ids = np.zeros(len(even_image_vectors))    
-    for i in range(len(even_image_vectors)) :
-        _ , even_image_label_ids[i] = dataset[i*2]
-
-    odd_image_vectors = utils.get_odd_image_feature_vectors(feature_model)
-    if odd_image_vectors is None :
-        return
-    odd_image_vectors = utils.convert_higher_dims_to_2d(odd_image_vectors)
-    odd_image_label_ids = np.zeros(len(odd_image_vectors))
-    for i in range(len(odd_image_vectors)) :
-        _ , odd_image_label_ids[i] = dataset[i*2+1]   
+class Task1() :
 
 
-    return  even_image_vectors, even_image_label_ids, odd_image_vectors, odd_image_label_ids
+    def __init__(self):
+        self.dataset, self.labelled_images = utils.initialise_project()
+        self.component = None
+
+    def get_image_vectors_and_label_ids(self, feature_model : str) -> np.ndarray :
+
+        '''
+        Gives the vectors and label ids for even and odd images 
+        '''
+
+        even_image_vectors = mongo.get_all_feature_descriptor(feature_model)
+        even_image_vectors = utils.convert_higher_dims_to_2d(even_image_vectors)
+
+        even_image_label_ids = np.zeros(len(even_image_vectors))    
+        for i in range(len(even_image_vectors)) :
+            _ , even_image_label_ids[i] = self.dataset[i*2]
+
+        odd_image_vectors = utils.get_odd_image_feature_vectors(feature_model)
+        if odd_image_vectors is None :
+            return
+        odd_image_vectors = utils.convert_higher_dims_to_2d(odd_image_vectors)
+        odd_image_label_ids = np.zeros(len(odd_image_vectors))
+        for i in range(len(odd_image_vectors)) :
+            _ , odd_image_label_ids[i] = self.dataset[i*2+1]   
 
 
-def get_image_vectors_by_label(label_feature_model : str, even_image_vectors : np.ndarray = None, even_image_label_ids : np.ndarray = None ) -> np.ndarray :
+        return  even_image_vectors, even_image_label_ids, odd_image_vectors, odd_image_label_ids
 
-    #image vectors associated with a label :  of array  101 * n * 1000
-    if even_image_vectors is None and even_image_label_ids is None :
 
-        print(f"Needs image vectors and label ids")            
 
-    else :
+    def get_label_representives(self, label_feature_model : str ) -> list :
 
+        '''
+        Gives the label representative vectors for each label 
+        '''
+        print(f"Getting label representativess...\n")
+        label_representives = mongo.get_label_feature_descriptor(label_feature_model)
+
+        return label_representives
+
+
+    def get_image_vectors_by_label(self, even_image_vectors : np.ndarray = None, even_image_label_ids : np.ndarray = None ) -> list :
+
+        '''
+        Get image vectors by label
+        '''
         unique_label_ids = np.unique(even_image_label_ids.astype(int))
         map_image_vectors_by_label = { label_id : [] for label_id in unique_label_ids }
         for label_id, image_vector in zip(even_image_label_ids, even_image_vectors):
             map_image_vectors_by_label[label_id].append(image_vector)
         image_vectors_by_label = [None] * len(map_image_vectors_by_label)
-        
         for label_id, image_vectors in map_image_vectors_by_label.items() :
             #print(label_id)
             image_vectors_by_label[label_id] = np.vstack(image_vectors)
-        
         return image_vectors_by_label
 
+    def get_label_wise_latent_semantic_representives(self, image_vectors_by_label : list) -> list :
+
+        label_wise_latent_semantic_representives = []
+        print(f"Getting label representatives from label latent semantics...\n")
+        for label_features in image_vectors_by_label :
+            label_wise_latent_semantic_representives.append(utils.label_fv_kmediods(label_features))
+            #label_wise_latent_semantic_representives.append(np.mean(label_features, axis=0))
+
+        return label_wise_latent_semantic_representives
 
 
+    def fit_transform(self, k : int, training_data : np.ndarray ) -> np.ndarray :
+
+        '''
+        Calculates the latent semantics on the training data and return the transformed matrix of training set
+        '''
+        print(f"Calculating latent sematics for label vectors...\n")
+        U, S, VT = dr.svd_old(training_data, k, False)
+        self.component = VT
+        if S.ndim >=2 :
+            training_data_transformed = U @ S
+        else :
+            training_data_transformed = U @ np.diag(S) 
+        return training_data_transformed
 
 
-def get_label_wise_latent_semantics(k : int, even_image_vectors_by_label : list) -> list :
+    def transform(self, testing_data : np.ndarray) -> np.ndarray :
+
+        '''
+        Performming change of basis for odd image vectors for testing set
+        '''
+        print(f"Transforming odd image vector to new basis vectors...\n")
+        testing_data_transformed =  testing_data @ self.component.T
+        return  testing_data_transformed
 
 
-    '''
-    Return the latent semantics for all the labels either from saved file or by calculating.
-    Calculate latent semantics for all the label matrices created from even images and saves it.
-    '''
-    filename = f"{k}_label_wise_latent_semantics.pkl"
+    def get_predictions(self, label_matrix : np.ndarray, odd_image_matrix : np.ndarray, metric : str) -> np.ndarray :
 
-    ### TEMP ###
-    temp_file1 = f"{k}_label_wise_latent_semantics_non_center.pkl"
-    temp_file2 = f"{k}_label_wise_latent_semantics_auto_center.pkl"
-    temp_file3 = f"{k}_label_wise_latent_semantics_auto_non_center.pkl"
+        '''
+        Calculating distances and predicting labels
+        '''
+        print(f"Calculating distances...\n")
+        if metric == 'euclidean' :
+            distance_matrix = utils.euclidean_distance_matrix(label_matrix, odd_image_matrix)
+        elif metric == 'cosine' :
+            distance_matrix = utils.cosine_distance_matrix(label_matrix, odd_image_matrix)
 
-    if os.path.exists(filename) :
-        print(f"Label wise latent semantics with k value {k} already exists...\n")
-        label_wise_latent_semantics = torch.load(filename)
-    else :
-        label_wise_latent_semantics = [] 
-        for label_id, label_vectors in enumerate(even_image_vectors_by_label) :
-            print(f"Calulating latent semantics for label id {label_id} .....")
-            U,_,_ = dr.svd(label_vectors, k)
-            label_wise_latent_semantics.append(U)
+        odd_image_predicted_label_ids = np.argmin(distance_matrix, axis=0)
+        return odd_image_predicted_label_ids
 
-        #Saving for future use
-        torch.save(label_wise_latent_semantics, filename)
+
+    def test_and_print(self,odd_image_label_ids : np.ndarray, odd_image_predicted_label_ids : np.ndarray)  :
         
-        ### TEMP ###
-        label_wise_latent_semantics_non_center = [] 
-        label_wise_latent_semantics_auto_center = [] 
-        label_wise_latent_semantics_auto_non_center = [] 
-        for label_id, label_vectors in enumerate(even_image_vectors_by_label) :
-            print(f"Calulating latent semantics for label id {label_id} .....")
-            U,_,_ = dr.svd(label_vectors, k, False)
-            label_wise_latent_semantics_non_center.append(U)
-            
+        '''
+        Results
+        '''
+        #Test 
+        print(f"Calculating scores for predictions...")
+        precision, recall, f1, accuracy  = utils.compute_scores(odd_image_label_ids, odd_image_predicted_label_ids, avg_type=None, values=True)
 
-            #By default non center 
-            U,_,_ = np.linalg.svd(label_vectors,full_matrices=False)
-            label_wise_latent_semantics_auto_non_center.append(U[:,:k])
-            
+        #Display results
+        utils.print_scores_per_label(self.dataset, precision, recall, f1, accuracy,'Task 1')
 
 
-            mean = np.mean(label_vectors, axis=0)
-            label_vectors = label_vectors - mean
-            U,_,_ = np.linalg.svd(label_vectors,full_matrices=False)
-            label_wise_latent_semantics_auto_center.append(U[:,:k])
-            
+    def runTask1(self, case : int, k=False) :
 
-        torch.save(label_wise_latent_semantics_non_center, temp_file1)
-        torch.save(label_wise_latent_semantics_non_center, temp_file3)
-        torch.save(label_wise_latent_semantics_auto_center, temp_file2)
+        '''
+        Main task function.
+        '''
+        
+        print(f"\nEnter the value of k for obtaining latent semantics : ")
+        if not k :
+            k = utils.int_input()
 
-    return label_wise_latent_semantics
+        #option 5 fc layer 
+        self.option = 5
+        even_image_vectors, even_image_label_ids, odd_image_vectors, odd_image_label_ids = self.get_image_vectors_and_label_ids(utils.feature_model[self.option])
+        label_representives = self.get_label_representives(utils.label_feature_model[self.option])
+        
+        match case :
 
-def get_label_wise_latent_semantic_representives(label_wise_latent_semantics : list) -> list :
+            case 1 :
+                '''
+                Get label vectors from even images, create latent semantics, transform odd images and classify according to label vectors and transformed odd images
+                '''
 
-    label_wise_latent_semantic_representives = []
-    print(f"Getting label representatives from label latent semantics...\n")
-    for label_features in label_wise_latent_semantics :
-        label_wise_latent_semantic_representives.append(utils.label_fv_kmediods(label_features))
+                label_representives_transformed = self.fit_transform(k, label_representives)
+                odd_image_vectors_transformed = self.transform(odd_image_vectors)
 
-    return label_wise_latent_semantic_representives
+            case 2 :
 
-def get_odd_image_vectors_latent_semantics(k : int, odd_image_vectors : np.ndarray) -> np.ndarray :
-
-    filename = f"{k}_odd_images_latent_semantics.pkl"
-    if os.path.exists(filename) :
-        print(f"Latent semantics of odd images with k value {k} already exists...\n")
-        odd_image_vectors_latent_semantics = torch.load(filename)
-    else :
-        #Odd images latent semantics :
-        print(f"Calculating latent semantics for odd images...")
-        odd_image_vectors_latent_semantics,_,_ = dr.svd(odd_image_vectors,k)
-        torch.save(odd_image_vectors_latent_semantics, filename)
-    return odd_image_vectors_latent_semantics
+                '''
+                Get even image vectors, create latent sematics, create label vectors, transform odd images,  classify according to label vectors and transformed odd images
+                '''
+                even_image_vectors_transformed = self.fit_transform(k,even_image_vectors)
+                odd_image_vectors_transformed = self.transform(odd_image_vectors)
+                even_image_vectors_by_label = self.get_image_vectors_by_label(even_image_vectors_transformed, even_image_label_ids)
+                label_representives_transformed = self.get_label_wise_latent_semantic_representives(even_image_vectors_by_label)
+                label_representives_transformed = np.vstack(label_representives_transformed)
 
 
-def get_predictions(label_wise_latent_semantic_representives : np.ndarray, odd_image_vectors_latent_semantics : np.ndarray) -> np.ndarray :
+            case 3 : 
+
+                '''
+                Get even image vectors per label, do 101 latent semantics conversions and 101 odd image transformation, create label embeddings and distance matrix
+                '''
+
+                if True :
+                    #Even images by label 
+                    even_image_vectors_by_label = self.get_image_vectors_by_label(even_image_vectors, even_image_label_ids)
+
+                    #Contains U,S,VT
+                    label_specific_semantics_matrices = []
+
+                    #Contains U @ S per label matrix 
+                    transformed_label_specific_semantics_matrices = []
+
+                    #Projections of all odd images in each label specific matrix 
+                    transformed_odd_image_matrices_by_label = []
+
+                    for label_id, label_matrix in enumerate(even_image_vectors_by_label) :
+                        print(f"Label ID : {label_id}")
+                        U, S, VT = dr.svd_old(label_matrix,k)
+                        label_specific_semantics_matrices.append((U, S, VT))
+                        transformed_label_specific_semantics_matrices.append( U @ S)
+                        transformed_odd_image_matrices_by_label.append(odd_image_vectors @ VT.T)
+
+                    #Combines transformed_label_specific_semantics_matrices using kmediods to get a vector for each label 
+                    transformed_label_specific_semantics_embeddings = [utils.label_fv_kmediods(l) for l in transformed_label_specific_semantics_matrices ]   
+
+                    torch.save(label_specific_semantics_matrices,'label_specific_semantics_matrices.pkl')
+                    torch.save(transformed_label_specific_semantics_matrices,'transformed_label_specific_semantics_matrices.pkl')
+                    torch.save(transformed_odd_image_matrices_by_label,'transformed_odd_image_matrices_by_label.pkl')
+                    torch.save(transformed_label_specific_semantics_embeddings,'transformed_label_specific_semantics_embeddings.pkl')
+
+                else :
+                    transformed_odd_image_matrices_by_label = torch.load('transformed_odd_image_matrices_by_label.pkl')
+                    transformed_label_specific_semantics_embeddings = torch.load('transformed_label_specific_semantics_embeddings.pkl')
+                
+                #Converting the label vectors into a single matrix for 101 com
+                #label_embeddings = np.vstack(transformed_label_specific_semantics_embeddings)
+                distance_matrix = []
+                for label_id, label_embedding in enumerate(transformed_label_specific_semantics_embeddings) :
+                    print(f"Label ID : {label_id}")
+                    distance_matrix.append(utils.euclidean_distance_matrix(label_embedding, transformed_odd_image_matrices_by_label[label_id]))
+                
+                torch.save(distance_matrix, 'distance_matrix.pkl')
+                print(distance_matrix[0])
+                distance_matrix_stacked = np.vstack(distance_matrix)
+                odd_image_label_ids_predicted = np.argmin(distance_matrix_stacked, axis=0)
+                print(f"Shape : {odd_image_label_ids_predicted.shape}, expected : 1x 4338")
+
+        #odd_image_label_ids_predicted = self.get_predictions(label_representives_transformed, odd_image_vectors_transformed, 'euclidean')
+        self.test_and_print(odd_image_label_ids, odd_image_label_ids_predicted)
     
-    #Classifying by calculating distances 
-    print(f"Calculating distances...")
-    distance_matrix = utils.cosine_distance_matrix(np.vstack(label_wise_latent_semantic_representives), odd_image_vectors_latent_semantics)
-    print(distance_matrix.shape)
+        ### DISPLAY PREDICTED LABEL PROMPT ###
+        map_odd_image_id_predicted_label = {(index*2)+1 : label_id for index, label_id in enumerate(odd_image_label_ids_predicted)}
 
-    odd_image_predicted_label_ids = np.argmin(distance_matrix, axis=0)
+        while True :
+            user_input = utils.get_user_input_odd_image_id_looped(self.dataset)
+            if user_input == 'x' :
+                return
+            else :
+                predicted_label_id = map_odd_image_id_predicted_label[user_input]
+                predicted_label = self.dataset.categories[predicted_label_id]
+                print(f"The predicted label for image id - {user_input} is : {predicted_label}")
+                utils.display_image_and_labels(self.dataset, user_input, predicted_label)
 
-    return odd_image_predicted_label_ids
+            
+if __name__ == '__main__':
+    task1 = Task1()
+    task1.runTask1(3)
 
-def test_and_print(odd_image_label_ids : np.ndarray, odd_image_predicted_label_ids : np.ndarray)  :
-
-    #Test 
-    precision, recall, f1, accuracy  = utils.compute_scores(odd_image_label_ids, odd_image_predicted_label_ids, avg_type=None, values=True)
-
-    #Display results
-    utils.print_scores_per_label(dataset, precision, recall, f1, accuracy,'Task 1')
-
-#Test if all even images svd is different than label wise :
-
-
-#1 a. collect images for each label and apply dimensionality reduction or b.reverse c.create a label matrix and do dr d. invdividual label dr 
-
-
-#2. Create a label vectors -> 1. kmediods or 2. Mean 
-
-#3. Get odd vectors
-#3 a. apply same dimensionality reduction
-
-#4. compare odd images to label vector and assign top resutl using distance measure
-
-#5. test scores 
-#6. display scores 
-
-
-############### MAIN ##################
-print(f"Enter the value of k for obtaining latent semantics : ")
-k = utils.int_input()
-
-#option 5 fc layer 
-option = 5
-dataset, labelled_images = utils.initialise_project()
-
-even_image_vectors, even_image_label_ids, odd_image_vectors, odd_image_label_ids = get_image_vectors_and_label_ids(utils.feature_model[option])
-even_image_vectors_by_label = get_image_vectors_by_label(utils.label_feature_model[option], even_image_vectors, even_image_label_ids)
-label_wise_latent_semantics = get_label_wise_latent_semantics(k, even_image_vectors_by_label)
-label_wise_latent_semantic_representives = get_label_wise_latent_semantic_representives(label_wise_latent_semantics)
-odd_image_vectors_latent_semantics =  get_odd_image_vectors_latent_semantics(k, odd_image_vectors)
-odd_image_predicted_label_ids = get_predictions(label_wise_latent_semantic_representives, odd_image_vectors_latent_semantics)
-
-print(odd_image_label_ids)
-print(odd_image_predicted_label_ids)
-test_and_print(odd_image_label_ids, odd_image_predicted_label_ids)
-
-#Label vectors not in the DB 
-#print(len(label_vectors))
+    
