@@ -491,6 +491,16 @@ def get_user_selected_dim_reduction():
     option = int_input()
     return option
 
+def get_user_selection_relevance_feedback():
+    """This is a helper code which prints all the available relevance feedback system code and take input from user"""
+    print('Select your option:\
+          \n\n\
+          \n1. SVM\
+          \n2. Probabilistic Relevance Feedback\
+          \n\n')
+    option = int_input(1)
+    return option
+
 
 def print_decreasing_weights(data, object="ImageID"):
     """
