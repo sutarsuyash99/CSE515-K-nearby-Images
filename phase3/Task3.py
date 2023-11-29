@@ -35,7 +35,6 @@ class Task3:
             _ , odd_image_label_ids[i] = self.dataset[i*2+1]
 
         #Normalize if required
-        #Best results : euclidean without normalization, euclidean L2, Cosine without normalization, Cosine L2  - All same 
         even_image_vectors = utils.l2_normalization(even_image_vectors)
         odd_image_vectors = utils.l2_normalization(odd_image_vectors)
 
