@@ -18,7 +18,24 @@ def PCA(data):
         if eigenvalues[val] < mean:
             # return val, eigenvectors
             return val, eigenvectors[:, :val]
-    # return eigenvalues, eigenvectors
+
+def PCA_0b(data):
+    covariance_matrix = np.cov(data, rowvar=False)
+    eigenvalues, eigenvectors = np.linalg.eig(covariance_matrix)
+    sorted_indices = np.argsort(eigenvalues)[::-1]
+    eigenvalues = eigenvalues[sorted_indices].real
+    eigenvectors = eigenvectors[:, sorted_indices]
+    var = eigenvalues/sum(eigenvalues)
+    mean = np.mean(eigenvalues)
+    maxval = 0
+    for val in range(len(eigenvalues)):
+        # PCA where mean is greater than the 
+        maxval += var[val]
+        if eigenvalues[val] < mean:
+            # return val, eigenvectors
+            return val
+        elif maxval > 0.95:
+            return val   
 
 def mds(label, X, N, learning_rate = 0.001, num_iterations = 300):
     """

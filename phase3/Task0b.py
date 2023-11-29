@@ -18,7 +18,9 @@ class Task0b:
             # get all data for label
             label_images = mongo_query.get_all_feature_descriptor_for_label(model_option, label_selected)
             # call functions -- call here in the below format
-            k, _ = inherent_dimensionality.PCA(label_images)
+
+            k = inherent_dimensionality.PCA_0b(label_images)
+
             # print inherent dimensionality    
             print(f"For Label: {label_selected} at index: {i}, inherent dimensionality: {k}")
         
