@@ -79,7 +79,7 @@ class Task5:
 
         numer = (0.7*fkvrel + 0.3*fkrel)/(1-(0.7*fkvrel + 0.3*fkrel))
         denom = (0.7*fkvirel + 0.3*fkirel)/(1-(0.7*fkvirel + 0.3*fkirel))
-        print(np.where(numer > 1), np.where(numer == 0 ), np.where(numer == 1))
+        # print(np.where(numer > 1), np.where(numer == 0 ), np.where(numer == 1))
         dday = np.log(numer/denom)
         final = query_vector + beta*dday
         print(final)
@@ -144,16 +144,17 @@ class Task5:
             i += 1
             if i > 500:
                 break
-        output_list = vrel[:10].copy()
-        output_list = [(x * 2, y, z) for x, y, z in output_list]
-        utils.display_k_images_subplots(self.dataset,output_list, f"Using SVM for top 10 images Very Relevent")
-        output_list = vrel[-10: ].copy()
-        output_list = [(x * 2, y, z) for x, y, z in output_list]
-        utils.display_k_images_subplots(self.dataset,output_list, f"Using SVM for last 10 images  Bottom 10 in Very Relevent")
+        # To see the images classified
+        # output_list = vrel[:10].copy()
+        # output_list = [(x * 2, y, z) for x, y, z in output_list]
+        # utils.display_k_images_subplots(self.dataset,output_list, f"Using SVM for top 10 images Very Relevent")
+        # output_list = vrel[-10: ].copy()
+        # output_list = [(x * 2, y, z) for x, y, z in output_list]
+        # utils.display_k_images_subplots(self.dataset,output_list, f"Using SVM for last 10 images  Bottom 10 in Very Relevent")
 
         # Adding the weights and remove the irelevant weights
         new_query_vector = query_vector + (0.7*vrel_w + 0.3*rel_w) - (0.7*virel_w + 0.3*irel_w)
-        print(new_query_vector)
+
         return new_query_vector
 
     def run_feedback(self, query_vector = []):
@@ -171,8 +172,9 @@ class Task5:
         option = utils.get_user_selection_relevance_feedback()
         # 1 -> SVM
         # 2 -> Probabilist Relevance Feedback System
+        # Testing
         # feedback = { 2494//2 : "+R", 2482//2: "+R", 2084//2 : "R", 2092//2 : "R", 4138//2 : "I", 4116//2 : "I", 6202//2 : "+I" , 6206//2 : "+I"}
-        feedback= {2500//2: "+R",  2308//2 : "+R",  2252//2 : "R", 5430//2 : "I", 7538//2 : "+I", 8140//2 : "+I",  8162//2 : "I"}
+        # feedback= {2500//2: "+R",  2308//2 : "+R",  2252//2 : "R", 5430//2 : "I", 7538//2 : "+I", 8140//2 : "+I",  8162//2 : "I"}
         res = None
         if len(query_vector) == 0 :
             query_vector = image_vectors[self.task_4b["query_image"]//2]
