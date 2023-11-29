@@ -79,7 +79,7 @@ class Task5:
 
         numer = (0.7*fkvrel + 0.3*fkrel)/(1-(0.7*fkvrel + 0.3*fkrel))
         denom = (0.7*fkvirel + 0.3*fkirel)/(1-(0.7*fkvirel + 0.3*fkirel))
-        print(np.where(numer > 1), np.where(numer == 0 ), np.where(numer == 1))
+        # print(np.where(numer > 1), np.where(numer == 0 ), np.where(numer == 1))
         dday = np.log(numer/denom)
         final = query_vector + beta*dday
         print(final)
