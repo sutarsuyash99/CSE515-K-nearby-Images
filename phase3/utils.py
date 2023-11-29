@@ -1114,6 +1114,28 @@ def print_scores_per_label(dataset : torchvision.datasets.Caltech101, precision 
     
     header = [ 'Label ID', 'Label Name', 'Precision', 'Recall', 'F1']
     df = pd.DataFrame(data, columns=header)
-
     pd.set_option('display.max_rows', None)
-    print(df.to_string(index=False, col_space=10))
+    print(df.to_string(index=False, col_space=10))    
+
+
+def read_file(filename):
+    featureDesc = torch.load(filename)
+    return featureDesc
+
+def get_data_to_store(file_data, labelled_data):
+    data = []
+    for imageid in file_data:
+        if(imageid % 2 != 0):
+            map = {
+                "imageID": imageid,
+                "label": labelled_data[imageid] or "unknown",
+                "feature_descriptor": file_data[imageid].tolist()
+            }
+            data.append(map)  
+    return data
+
+def get_odd_iamges(model, labelled_data):
+    # TODO: if PKL file is not present, compute it then and there
+    file_data = read_file(model+"_vectors.pkl")
+    data = get_data_to_store(file_data, labelled_data)
+    return data
