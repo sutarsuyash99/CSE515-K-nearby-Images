@@ -32,6 +32,7 @@ class Task2():
         self.highest_clusters_formed_till_now = 0
         self.neighbours = 0
         self.min_outliers_count = 5000
+        self.label_number = None
         # data = []
         for item in self.feature_descriptors:
             label = item['label']
@@ -103,8 +104,8 @@ class Task2():
         # print(data_2d.shape)
         # print(f"type of data_2d = {type(data_2d)}")
         data = np.array(data)
-        # data_2d = inherent_dimensionality.mds(label, data, 2)
-        data_2d = inherent_dimensionality.classical_mds(data, 2)
+        data_2d = inherent_dimensionality.mds(self.label_number, data, 2)
+        # data_2d = inherent_dimensionality.classical_mds(data, 2)
         # print(data_2d.shape)
         # print(f"type of data_2d = {type(data_2d)}")
         return data_2d
@@ -131,11 +132,18 @@ class Task2():
             pil_images.append(np.array(self.dataset[i][0]))
 
         unique_labels = np.unique(labels)
+        # find unique labels without -1
         unique_labels = unique_labels[unique_labels != -1]
         for label in unique_labels:
             cluster_points = data_2d[labels == label]
+            indices = np.where(labels == label)[0]
+            # print(indices)
+            selected_pil_images = [pil_images[i] for i in indices]
+            # pil_images_label = pil_images[indices]
             # print(type(cluster_points))
-            for point, image in zip(cluster_points, pil_images):
+            # print(len(cluster_points))
+            # print(len(selected_pil_images))
+            for point, image in zip(cluster_points, selected_pil_images):
                 imagebox = OffsetImage(image, zoom=0.1)  # Adjust the zoom factor as needed
                 # print(point)
                 # print(type(point))
@@ -217,6 +225,7 @@ class Task2():
             match choice:
                 case 1:
                     label_number = utils.get_user_input_label()
+                    self.label_number = label_number
                     selected_label = self.labels[label_number]
 
                     label_vectors = self.grouped_data[selected_label]
