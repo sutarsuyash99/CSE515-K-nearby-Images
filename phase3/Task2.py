@@ -332,8 +332,8 @@ class Task2():
                 case 3: self.visualization_options()
 
 
-task2 = Task2()
-task2.execute()
-# if __name__ == "__init__":
-#     task2 = Task2()
-#     task2.execute()
+# task2 = Task2()
+# task2.execute()
+if __name__ == "__main__":
+    task2 = Task2()
+    task2.execute()
