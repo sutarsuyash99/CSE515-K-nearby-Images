@@ -24,7 +24,7 @@ class Task5:
         feedback_map = {}
         print(" \n Please enter Image Id you want to give feedback on")
 
-        print("Type feedback as - Very Relevent - +R, Relevent - R, Irelevent - I, Very Irelevent - +I \n")
+        print("Type feedback as - Very Relevent - R+, Relevent - R, Irelevent - I, Very Irelevent - I- \n")
         while True:
             # Get image ID from the user
             image_id = input("Enter Image IDs Commas Seprated (or type 'e' to exit): ")
@@ -49,11 +49,11 @@ class Task5:
         """Gets feedback from users and makes changes to the query accoridingly"""
         # alpha=1
         # beta= 0.5
-        # rel_img = [image_vectors[x] for x, y in feedback.items() if y == "+R"]
+        # rel_img = [image_vectors[x] for x, y in feedback.items() if y == "R+"]
         # rel_centroid = np.mean(rel_img, axis=0)
     
         # # Compute the centroid of the non-relevant documents
-        # irel_img = [image_vectors[x] for x, y in feedback.items() if y == "+I"]
+        # irel_img = [image_vectors[x] for x, y in feedback.items() if y == "I-"]
         # non_rel_centroid = np.mean(irel_img, axis=0)
         # print(non_rel_centroid)
         
@@ -65,8 +65,8 @@ class Task5:
 
         image_vectors = (image_vectors > image_mean).astype(int)
 
-        vrel_img = [image_vectors[x] for x, y in feedback.items() if y == "+R"]
-        virel_img = [image_vectors[x] for x, y in feedback.items() if y == "+I"]
+        vrel_img = [image_vectors[x] for x, y in feedback.items() if y == "R+"]
+        virel_img = [image_vectors[x] for x, y in feedback.items() if y == "I-"]
         rel_img = [image_vectors[x] for x, y in feedback.items() if y == "R"]
         irel_img = [image_vectors[x] for x, y in feedback.items() if y == "I"]
 
@@ -102,16 +102,16 @@ class Task5:
 
         # Using 4 SVMs
         vrel_svm = svm_feedback.SVM()
-        vr_i_index = vrel_svm.run_svm(condition_1= "'+R' in key", condition_2= "'+R' not in key", data=data, feedback=feedback, task4b_index=task4b_considerset)
+        vr_i_index = vrel_svm.run_svm(condition_1= "'R+' in key", condition_2= "'R+' not in key", data=data, feedback=feedback, task4b_index=task4b_considerset)
         # Get weights
         vrel_w , b  = vrel_svm.return_weights_bias()
         
         rel_svm = svm_feedback.SVM()
-        r_i_index = rel_svm.run_svm(condition_1= "'R' == key", condition_2= "'+R' != key", data=data, feedback=feedback, task4b_index=task4b_considerset)
+        r_i_index = rel_svm.run_svm(condition_1= "'R' == key", condition_2= "'R+' != key", data=data, feedback=feedback, task4b_index=task4b_considerset)
         rel_w , b  = rel_svm.return_weights_bias()
 
         virel_svm = svm_feedback.SVM()
-        vir_i_index = virel_svm.run_svm(condition_1= "'+I' in key", condition_2= "'+I' not in key", data=data, feedback=feedback, task4b_index=task4b_considerset)
+        vir_i_index = virel_svm.run_svm(condition_1= "'I-' in key", condition_2= "'I-' not in key", data=data, feedback=feedback, task4b_index=task4b_considerset)
         virel_w , b  = virel_svm.return_weights_bias()
 
         irel_svm = svm_feedback.SVM()
@@ -173,8 +173,8 @@ class Task5:
         # 1 -> SVM
         # 2 -> Probabilist Relevance Feedback System
         # Testing
-        # feedback = { 2494//2 : "+R", 2482//2: "+R", 2084//2 : "R", 2092//2 : "R", 4138//2 : "I", 4116//2 : "I", 6202//2 : "+I" , 6206//2 : "+I"}
-        # feedback= {2500//2: "+R",  2308//2 : "+R",  2252//2 : "R", 5430//2 : "I", 7538//2 : "+I", 8140//2 : "+I",  8162//2 : "I"}
+        # feedback = { 2494//2 : "R+", 2482//2: "R+", 2084//2 : "R", 2092//2 : "R", 4138//2 : "I", 4116//2 : "I", 6202//2 : "I-" , 6206//2 : "I-"}
+        # feedback= {2500//2: "R+",  2308//2 : "R+",  2252//2 : "R", 5430//2 : "I", 7538//2 : "I-", 8140//2 : "I-",  8162//2 : "I"}
         res = None
         if len(query_vector) == 0 :
             query_vector = image_vectors[self.task_4b["query_image"]//2]
